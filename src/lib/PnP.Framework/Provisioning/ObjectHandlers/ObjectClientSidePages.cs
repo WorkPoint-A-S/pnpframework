@@ -438,7 +438,6 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     {
                         continue;
                     }
-
                     sectionCount++;
                     switch (section.Type)
                     {
@@ -478,6 +477,17 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         default:
                             page.AddSection(PnPCore.CanvasSectionTemplate.OneColumn, section.Order, (int)section.BackgroundEmphasis);
                             break;
+                    }
+
+                    var addedSection = page.Sections.LastOrDefault();
+                    if (addedSection != null)
+                    {
+                        addedSection.Collapsible = section.Collapsible;
+                        addedSection.DisplayName = section.DisplayName;
+                        addedSection.IconAlignment = section.IconAlignment;
+                        addedSection.IsExpanded = section.IsExpanded;
+                        addedSection.ShowDividerLine = section.ShowDividerLine;
+                        addedSection.ZoneEmphasis = section.ZoneEmphasis;
                     }
 
                     // Add controls to the section
@@ -736,7 +746,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     }
 
                     // Clear existing header controls as they'll be overwritten
-                    page.HeaderControls.Clear();                    
+                    page.HeaderControls.Clear();
 
                     // Load existing available controls
                     var componentsToAdd = page.AvailablePageComponents();
@@ -800,6 +810,34 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 }
             }
 
+            // The PnP.Core.Model.SharePoint.CanvasSection class is marked internal, so in order to set the section type we have to use reflection,
+            // unless we want to also maintain a workpoint fork of PnP.core. Exceptions in this section are swallowed,
+            // as I'm not sure how it will behave with sections that are not marked as collapsible.
+            // The section type property must be set to 1 in order for a section to be collapsible.
+            // In PnP.Core, when setting the SectionType property it is done like this: Type = (Section as CanvasSection).SectionType == 0 ? 1 : (Section as CanvasSection).SectionType;
+            // everywhere except the PageWebPart.cs class, which is what we're using here. I can't tell if this is an oversight in PnP.Core or if there is a deeper meaning,
+            // but for now this allows us to replicate collapsible sections and their settings without forking PnP.Core.
+            try
+            {
+                foreach (var section in page.Sections)
+                {
+                    if (section.Collapsible)
+                    {
+                        var pnpCanvasType = Type.GetType("PnP.Core.Model.SharePoint.CanvasSection, PnP.Core");
+                        var sectionTypeProperty = pnpCanvasType.GetProperty("SectionType");
+
+                        var sectionTypeValue = sectionTypeProperty.GetValue(section);
+                        if (sectionTypeValue != null && (int)sectionTypeValue == 0)
+                        {
+                            sectionTypeProperty.SetValue(section, 1);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
             // Persist the page
             if (clientSidePage.Layout == "Article" && clientSidePage.PromoteAsTemplate)
             {
@@ -812,7 +850,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
             // Load the page list item
             var fileAfterSave = web.GetFileByServerRelativePath(ResourcePath.FromDecodedUrl(url));
-            web.Context.Load(fileAfterSave, p=>p.ListItemAllFields);
+            web.Context.Load(fileAfterSave, p => p.ListItemAllFields);
             web.Context.ExecuteQueryRetry();
 
             // Update page content type

@@ -1,5 +1,7 @@
-﻿using PnP.Framework.Extensions;
+﻿using PnP.Core.Model.SharePoint;
+using PnP.Framework.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace PnP.Framework.Provisioning.Model
@@ -45,6 +47,41 @@ namespace PnP.Framework.Provisioning.Model
         /// The emphasis color of the Canvas Section for a Client-side Page
         /// </summary>
         public Emphasis VerticalSectionEmphasis { get; set; }
+
+        /// <summary>
+        /// Color emphasis of the section 
+        /// </summary>
+        public int ZoneEmphasis { get; set; }
+
+        /// <summary>
+        /// Is this section collapsible?
+        /// </summary>
+        public bool Collapsible { get; set; }
+
+        /// <summary>
+        /// Is the collapsible section expanded?
+        /// </summary>
+        public bool IsExpanded { get; set; }
+
+        /// <summary>
+        /// DisplayName of the collapsible section
+        /// </summary>
+        public string DisplayName { get; set; }
+
+        /// <summary>
+        /// Sets the alignment of the collaps icon, left/right or not configured
+        /// </summary>
+        public IconAlignment? IconAlignment { get; set; }
+
+        /// <summary>
+        /// Show a devided line for this collapsible section?
+        /// </summary>
+        public bool ShowDividerLine { get; set; }
+
+        /// <summary>
+        /// Type of this section, not configurable by SDK users
+        /// </summary>
+        public int SectionType { get; set; }
 
         #endregion
 
@@ -113,7 +150,6 @@ namespace PnP.Framework.Provisioning.Model
 
         #endregion
     }
-
     /// <summary>
     /// The type of the Canvas section for a Client-side Page.
     /// </summary>
