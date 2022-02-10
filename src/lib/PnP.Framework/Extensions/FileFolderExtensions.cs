@@ -1,6 +1,7 @@
 ﻿using PnP.Framework;
 using PnP.Framework.Diagnostics;
 using PnP.Framework.Enums;
+using PnP.Framework.Provisioning.ObjectHandlers.Utilities;
 using PnP.Framework.Utilities;
 using PnP.Framework.Utilities.Async;
 using System;
@@ -509,7 +510,8 @@ namespace Microsoft.SharePoint.Client
                 await context.ExecuteQueryRetryAsync();
 
                 // Get the newly created folder
-                var newFolder = parentFolder.Folders.GetByPath(ResourcePath.FromDecodedUrl(folderName));
+                var folderPath = parentFolder.ServerRelativePath.DecodedUrl.TrimEnd(new char[] { '/' }) + "/" + folderName;
+                var newFolder = context.Web.GetFolderByServerRelativePath(ResourcePath.FromDecodedUrl(folderPath));
                 // Ensure all properties are loaded (to be compatible with the previous implementation)
                 if (expressions != null && expressions.Any())
                 {
@@ -818,9 +820,9 @@ namespace Microsoft.SharePoint.Client
 
             var folderServerRelativeUrl = UrlUtility.Combine(web.ServerRelativeUrl, webRelativeUrl, "/");
 
-            // Check if folder is inside a list
-            var listCollection = web.Lists;
-            web.Context.Load(listCollection, lc => lc.Include(l => l.RootFolder));
+            // Check if folder is inside a list. We need to exclude Solution Catalog since users that are not site owners will not have access to the root folder and we cannot anyhow create folders there.
+            var listCollection = web.Context.LoadQuery(web.Lists.Where(l => l.BaseTemplate != (int)ListTemplateType.SolutionCatalog).Include(l => l.RootFolder));
+
             await web.Context.ExecuteQueryRetryAsync();
 
             List containingList = null;
@@ -869,8 +871,8 @@ namespace Microsoft.SharePoint.Client
                 Folder nextFolder = null;
                 foreach (Folder existingFolder in folderCollection)
                 {
-                    //System.Net.WebUtility.UrlDecode removes + from folderName which leads to invalid compare if folderName was not UrlEncoded 
-                    if (string.Equals(existingFolder.Name, System.Net.WebUtility.UrlDecode(folderName), StringComparison.InvariantCultureIgnoreCase) || string.Equals(existingFolder.Name, folderName, StringComparison.InvariantCultureIgnoreCase))
+                    //WebUtility.UrlDecode removes + from folderName which leads to invalid compare if folderName was not UrlEncoded --> replaced with Uri.UnescapeDatastring
+                    if (string.Equals(existingFolder.Name, Uri.UnescapeDataString(folderName), StringComparison.InvariantCultureIgnoreCase) || string.Equals(existingFolder.Name, folderName, StringComparison.InvariantCultureIgnoreCase))
                     {
                         nextFolder = existingFolder;
                         break;
@@ -887,13 +889,15 @@ namespace Microsoft.SharePoint.Client
                         createPath = createPath.Substring(0, createPath.Length - folderName.Length).TrimEnd('/');
                         var listUrl =
                             containingList.EnsureProperty(f => f.RootFolder).EnsureProperty(r => r.ServerRelativeUrl);
-                        var newFolderInfo = new ListItemCreationInformation
+
+                        var newFolderInfo = new ListItemCreationInformationUsingPath
                         {
                             UnderlyingObjectType = FileSystemObjectType.Folder,
-                            LeafName = folderName,
-                            FolderUrl = UrlUtility.Combine(listUrl, createPath)
+                            FolderPath = ResourcePath.FromDecodedUrl(UrlUtility.Combine(listUrl, createPath)),
+                            LeafName = ResourcePath.FromDecodedUrl(folderName)
                         };
-                        ListItem newFolderItem = containingList.AddItem(newFolderInfo);
+
+                        ListItem newFolderItem = containingList.AddItemUsingPath(newFolderInfo);
 
                         var titleField = web.Context.LoadQuery(containingList.Fields.Where(f => f.Id == BuiltInFieldId.Title));
                         await web.Context.ExecuteQueryRetryAsync();

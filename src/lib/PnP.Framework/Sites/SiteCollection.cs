@@ -133,7 +133,7 @@ namespace PnP.Framework.Sites
             }
 
             if (sensitivityLabelId != Guid.Empty)
-            {                
+            {
                 payload.Add("SensitivityLabel", sensitivityLabelId);
                 payload["Classification"] = siteCollectionCreationInformation.SensitivityLabel;
             }
@@ -164,7 +164,7 @@ namespace PnP.Framework.Sites
             if (siteCollectionCreationInformation.Lcid != 0 && !Constants.SupportedLCIDs.Contains(siteCollectionCreationInformation.Lcid))
             {
                 string supportedValues = string.Join(" , ", Constants.SupportedLCIDs);
-                throw new Exception($"LCID value is not supported, supported values are: {supportedValues}");                
+                throw new Exception($"LCID value is not supported, supported values are: {supportedValues}");
             }
 
             payload.Add("HubSiteId", siteCollectionCreationInformation.HubSiteId);
@@ -328,7 +328,10 @@ namespace PnP.Framework.Sites
             }
             if (!string.IsNullOrEmpty(siteCollectionCreationInformation.SiteAlias))
             {
-                creationOptionsValues.Add($"SiteAlias:{siteCollectionCreationInformation.SiteAlias}");
+                string siteAlias = siteCollectionCreationInformation.SiteAlias;
+                siteAlias = UrlUtility.RemoveUnallowedCharacters(siteAlias);
+                siteAlias = UrlUtility.ReplaceAccentedCharactersWithLatin(siteAlias);
+                creationOptionsValues.Add($"SiteAlias:{siteAlias}");
             }
             creationOptionsValues.Add($"HubSiteId:{siteCollectionCreationInformation.HubSiteId}");
             optionalParams.Add("CreationOptions", creationOptionsValues);
@@ -507,7 +510,18 @@ namespace PnP.Framework.Sites
             )
         {
             ClientContext responseContext = null;
-            
+
+
+            Guid sensitivityLabelId = Guid.Empty;
+            if (siteCollectionCreationInformation.SensitivityLabelId != Guid.Empty)
+            {
+                sensitivityLabelId = siteCollectionCreationInformation.SensitivityLabelId;
+            }
+            else if (!string.IsNullOrEmpty(siteCollectionCreationInformation.SensitivityLabel))
+            {
+                sensitivityLabelId = await GetSensitivityLabelId(clientContext, siteCollectionCreationInformation.SensitivityLabel);
+            }
+
             var group = Graph.UnifiedGroupsUtility.CreateUnifiedGroup(
                 siteCollectionCreationInformation.DisplayName,
                 siteCollectionCreationInformation.Description,
@@ -518,8 +532,10 @@ namespace PnP.Framework.Sites
                 isPrivate: !siteCollectionCreationInformation.IsPublic,
                 createTeam: false,
                 retryCount: maxRetryCount,
-                delay: retryDelay, azureEnvironment: azureEnvironment,
-                preferredDataLocation: siteCollectionCreationInformation.PreferredDataLocation);
+                delay: retryDelay,
+                azureEnvironment: azureEnvironment,
+                preferredDataLocation: siteCollectionCreationInformation.PreferredDataLocation,
+                assignedLabels: new Guid[] { sensitivityLabelId });
 
             if (group != null && !string.IsNullOrEmpty(group.SiteUrl))
             {
@@ -672,7 +688,7 @@ namespace PnP.Framework.Sites
 
                                         try
                                         {
-                                            var urlToCheck = HttpUtility.UrlEncode(payload["Url"].ToString());
+                                            var urlToCheck = Uri.EscapeDataString(payload["Url"].ToString());
 
                                             var siteStatusRequestUrl = $"{clientContext.Web.Url}/_api/SPSiteManager/status?url='{urlToCheck}'";
 
@@ -899,7 +915,7 @@ namespace PnP.Framework.Sites
             string siteCollectionValidAlias = siteCollectionGroupifyInformation.Alias;
             siteCollectionValidAlias = UrlUtility.RemoveUnallowedCharacters(siteCollectionValidAlias);
             siteCollectionValidAlias = UrlUtility.ReplaceAccentedCharactersWithLatin(siteCollectionValidAlias);
-            
+
             siteCollectionGroupifyInformation.Alias = siteCollectionValidAlias;
 
             if (string.IsNullOrEmpty(siteCollectionGroupifyInformation.DisplayName))

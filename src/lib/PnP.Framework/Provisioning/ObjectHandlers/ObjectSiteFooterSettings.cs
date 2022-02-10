@@ -237,13 +237,13 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         file.EnsureProperty(f => f.ServerRelativePath);
                         var baseUri = new Uri(web.Url);
                         var fullUri = new Uri(baseUri, file.ServerRelativePath.DecodedUrl);
-                        var folderPath = HttpUtility.UrlDecode(fullUri.Segments.Take(fullUri.Segments.Length - 1).ToArray().Aggregate((i, x) => i + x).TrimEnd('/'));
+                        var folderPath = Uri.UnescapeDataString(fullUri.Segments.Take(fullUri.Segments.Length - 1).ToArray().Aggregate((i, x) => i + x).TrimEnd('/'));
 
                         // Configure the filename to use 
-                        fileName = HttpUtility.UrlDecode(fullUri.Segments[fullUri.Segments.Length - 1]);
+                        fileName = Uri.UnescapeDataString(fullUri.Segments[fullUri.Segments.Length - 1]);
 
                         // Build up a site relative container URL...might end up empty as well
-                        String container = HttpUtility.UrlDecode(folderPath.Replace(web.ServerRelativeUrl, "")).Trim('/').Replace("/", "\\");
+                        String container = Uri.UnescapeDataString(folderPath.Replace(web.ServerRelativeUrl, "")).Trim('/').Replace("/", "\\");
 
                         using (Stream memStream = new MemoryStream())
                         {
@@ -445,12 +445,18 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                                     for (var s = footerLink.FooterLinks.Count - 1; s >= 0; s--)
                                     {
                                         var childFooterLink = footerLink.FooterLinks[s];
-                                        newParentNode.Children.Add(new NavigationNodeCreationInformation()
+                                        var newChildNode = newParentNode.Children.Add(new NavigationNodeCreationInformation()
                                         {
                                             Url = parser.ParseString(childFooterLink.Url),
                                             Title = parser.ParseString(childFooterLink.DisplayName)
                                         });
-                                    }
+
+                                        if (childFooterLink.DisplayName.ContainsResourceToken())
+                                        {
+                                            web.Context.ExecuteQueryRetry();
+                                            newChildNode.LocalizeNavigationNode(web, childFooterLink.DisplayName, parser, scope);
+                                        }
+                                    }                                    
                                 }
                             }
                         }

@@ -4,6 +4,7 @@ using Microsoft.SharePoint.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using PnP.Framework.Diagnostics;
+using PnP.Framework.Graph;
 using PnP.Framework.Provisioning.Connectors;
 using PnP.Framework.Provisioning.Model;
 using PnP.Framework.Provisioning.Model.Configuration;
@@ -17,9 +18,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.IO;
 using System.Linq;
 using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
 using System.Threading;
-using System.Web;
+using System.Threading.Tasks;
 
 namespace PnP.Framework.Provisioning.ObjectHandlers
 {
@@ -424,7 +424,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 catch (Exception ex)
                 {
                     scope.LogError("Error checking archive status", ex.Message);
-                } 
+                }
             }
 
             // If the Team is currently archived
@@ -496,6 +496,15 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     wait = false;
                 }
             }
+
+            // Ensure that Files tab is available right after Teams creation
+            Task.Run(async () =>
+            {
+                var graphClient = GraphUtility.CreateGraphClient(accessToken);
+
+                await InitTeamDrive(groupId, graphClient);
+            }).GetAwaiter().GetResult();
+
             return (teamId);
         }
 
@@ -871,9 +880,9 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
             foreach (var channel in team.Channels)
             {
-                var existingChannel = existingChannels.FirstOrDefault(x => x["displayName"].ToString() == channel.DisplayName);
+                var existingChannel = existingChannels.FirstOrDefault(x => x["displayName"].ToString() == parser.ParseString(channel.DisplayName));
 
-                var channelId = existingChannel == null ? CreateTeamChannel(scope, channel, teamId, accessToken) : UpdateTeamChannel(channel, teamId, existingChannel, accessToken);
+                var channelId = existingChannel == null ? CreateTeamChannel(scope, channel, teamId, accessToken, parser) : UpdateTeamChannel(channel, teamId, existingChannel, accessToken, parser);
 
                 if (channelId == null) return false;
 
@@ -899,7 +908,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             return JToken.Parse(HttpHelper.MakeGetRequestForString($"{GraphHelper.MicrosoftGraphBaseURI}v1.0/teams/{teamId}/channels", accessToken))["value"];
         }
 
-        private static string UpdateTeamChannel(Model.Teams.TeamChannel channel, string teamId, JToken existingChannel, string accessToken)
+        private static string UpdateTeamChannel(Model.Teams.TeamChannel channel, string teamId, JToken existingChannel, string accessToken, TokenParser parser)
         {
             // Not supported to update 'General' Channel
             if (channel.DisplayName.Equals("General", StringComparison.InvariantCultureIgnoreCase))
@@ -907,14 +916,15 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
             var channelId = existingChannel["id"].ToString();
             var channelDisplayName = existingChannel["displayName"].ToString();
-            var identicalChannelName = channel.DisplayName == channelDisplayName;
+            var newChannelName = parser.ParseString(channel.DisplayName);
+            var identicalChannelName = newChannelName == channelDisplayName;
 
             // Prepare the request body for the Channel update
             var channelToUpdate = new
             {
-                description = channel.Description,
+                description = parser.ParseString(channel.Description),
                 // You can't update a channel if its displayName is exactly the same, so remove it temporarily.
-                displayName = identicalChannelName ? null : channel.DisplayName,
+                displayName = identicalChannelName ? null : newChannelName,
             };
 
             // Updating isFavouriteByDefault is currently not supported on either endpoint. Using the beta endpoint results in an error.
@@ -923,7 +933,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             return channelId;
         }
 
-        private static string CreateTeamChannel(PnPMonitoredScope scope, Model.Teams.TeamChannel channel, string teamId, string accessToken)
+        private static string CreateTeamChannel(PnPMonitoredScope scope, Model.Teams.TeamChannel channel, string teamId, string accessToken, TokenParser parser)
         {
             // Temporary variable, just in case
             List<String> channelMembers = null;
@@ -943,8 +953,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
             var channelToCreate = new
             {
-                channel.Description,
-                channel.DisplayName,
+                description = parser.ParseString(channel.Description),
+                displayName = parser.ParseString(channel.DisplayName),
                 isFavoriteByDefault = channel.Private ? false : channel.IsFavoriteByDefault,
                 membershipType = channel.Private ? "private" : "standard",
                 members = (channel.Private && channelMembers != null) ? (from m in channelMembers
@@ -991,7 +1001,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 // Avoid ActivityLimitReached 
                 System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
 
-                var existingTab = existingTabs.FirstOrDefault(x => x["displayName"] != null && HttpUtility.UrlDecode(x["displayName"].ToString()) == tab.DisplayName && x["teamsApp"]?["id"]?.ToString() == tab.TeamsAppId);
+                var existingTab = existingTabs.FirstOrDefault(x => x["displayName"] != null && Uri.UnescapeDataString(x["displayName"].ToString()) == tab.DisplayName && x["teamsApp"]?["id"]?.ToString() == tab.TeamsAppId);
 
                 var tabId = existingTab == null ? CreateTeamTab(scope, tab, parser, teamId, channelId, accessToken) : UpdateTeamTab(tab, parser, teamId, channelId, existingTab["id"].ToString(), accessToken);
 
@@ -1699,10 +1709,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
         private static Team GetTeamApps(string accessToken, string groupId, Team team, PnPMonitoredScope scope)
         {
-            var teamsAppsString = HttpHelper.MakeGetRequestForString($"{GraphHelper.MicrosoftGraphBaseURI}v1.0/teams/{groupId}/installedApps", accessToken);
+            var teamsAppsString = HttpHelper.MakeGetRequestForString($"{GraphHelper.MicrosoftGraphBaseURI}v1.0/teams/{groupId}/installedApps?$expand=teamsAppDefinition", accessToken);
             foreach (var app in JObject.Parse(teamsAppsString)["value"] as JArray)
             {
-                team.Apps.Add(new TeamAppInstance() { AppId = app["id"].Value<string>() });
+                team.Apps.Add(new TeamAppInstance() { AppId = app["teamsAppDefinition"]?["teamsAppId"]?.Value<string>() });
             }
             return team;
         }
@@ -1710,10 +1720,20 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         private static Team GetTeamChannels(ExtractConfiguration configuration, string accessToken, string groupId, Team team, PnPMonitoredScope scope)
         {
             var teamChannelsString = HttpHelper.MakeGetRequestForString($"{GraphHelper.MicrosoftGraphBaseURI}beta/teams/{groupId}/channels", accessToken);
-            team.Channels.AddRange(JsonConvert.DeserializeObject<List<Model.Teams.TeamChannel>>(JObject.Parse(teamChannelsString)["value"].ToString()));
+            var teamChannelsJObject = JObject.Parse(teamChannelsString);
+            team.Channels.AddRange(JsonConvert.DeserializeObject<List<Model.Teams.TeamChannel>>(teamChannelsJObject["value"].ToString()));
 
             foreach (var channel in team.Channels)
             {
+                //If channel description is null, set empty string, description is mandatory in the schema
+                channel.Description ??= "";
+                //Gets channel membership type, private or standard
+                var channelJObject = teamChannelsJObject["value"].FirstOrDefault(x => x["id"].ToString() == channel.ID);
+                if (channelJObject != default && channelJObject["membershipType"] != null)
+                {
+                    channel.Private = channelJObject["membershipType"].ToString().Equals("private", StringComparison.InvariantCultureIgnoreCase);
+                }
+
                 channel.Tabs.AddRange(GetTeamChannelTabs(configuration, accessToken, groupId, channel.ID));
                 if (configuration.Tenant.Teams.IncludeMessages)
                 {
@@ -1732,8 +1752,9 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         private static List<TeamTab> GetTeamChannelTabs(ExtractConfiguration configuration, string accessToken, string groupId, string channelId)
         {
             List<TeamTab> tabs = new List<TeamTab>();
-            var teamTabsString = HttpHelper.MakeGetRequestForString($"{GraphHelper.MicrosoftGraphBaseURI}v1.0/teams/{groupId}/channels/{channelId}/tabs", accessToken);
-            foreach (var tab in JsonConvert.DeserializeObject<List<TeamTab>>(JObject.Parse(teamTabsString)["value"].ToString()))
+            var teamTabsJObject = GetExistingTeamChannelTabs(groupId, channelId, accessToken);
+            var teamTabs = teamTabsJObject.ToObject<TeamTab[]>();
+            foreach (var tab in teamTabs)
             {
                 if (tab.Configuration != null && string.IsNullOrEmpty(tab.Configuration.ContentUrl))
                 {
@@ -1744,6 +1765,13 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     tab.Configuration.EntityId = tab.Configuration.EntityId ?? "";
                     tab.Configuration.WebsiteUrl = tab.Configuration.WebsiteUrl ?? "";
                     tab.Configuration.RemoveUrl = tab.Configuration.RemoveUrl ?? "";
+                }
+                //For backwards compatibility, if is null or empty, checks the TeamsApp node
+                if (string.IsNullOrEmpty(tab.TeamsAppId))
+                {
+                    var tabJObject = teamTabsJObject.FirstOrDefault(x => x["id"].ToString() == tab.ID);
+                    if (tabJObject != default)
+                        tab.TeamsAppId = tabJObject["teamsApp"]?["id"]?.ToString();
                 }
                 tabs.Add(tab);
             }
@@ -1758,6 +1786,18 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             mailNickname = UrlUtility.ReplaceAccentedCharactersWithLatin(mailNickname);
             return mailNickname;
         }
-        
+
+        public static async Task InitTeamDrive(string GroupId, Microsoft.Graph.GraphServiceClient graphClient = null)
+        {
+            var channels = await graphClient.Teams[GroupId].Channels.Request().GetAsync();
+
+            foreach (var channel in channels)
+            {
+                if (channel.DisplayName == "General")
+                {
+                    await graphClient.Teams[GroupId].Channels[channel.Id].FilesFolder.Request().GetAsync();
+                }
+            }
+        }
     }
 }

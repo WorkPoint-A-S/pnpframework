@@ -6,6 +6,64 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+
+- Support export folder default values #583 [magarma - Miguel Angel García Martínez]
+
+### Changed
+
+- Feature : remove special chars from the SiteAlias #558 [gautamdsheth - Gautam Sheth]
+- Fix: set ContextSettings Type to ClientContextType.PnPCoreSdk #566 [czullu - Christian Zuellig]
+- Fix: for adding folders in large list #559 [gautamdsheth - Gautam Sheth]
+- Added localization support for child nodes in footer #560 [b00johst - John Frankolin]
+- Additional changes for fix #498, improving header provisioning scenario #562 [fzbm - Florian Zink]
+- Catching File.NotFound exception to prevent error during export #573 [magarma - Miguel Angel García Martínez]
+- Check for null before foreach to avoid nullExceptionIssue #574 [magarma - Miguel Angel García Martínez]
+- Fix Clear-PnPDefaultColumnValues not working with taxonomy fields #576 [jackpoz - Giacomo Pozzoni]
+- Files tab teams first load after creation #588 [roberAlb - Roberto Ramon]
+- Adding beta option to MS Graph Users functions #586 [koenzomers - Koen Zomers]
+
+## [1.8.0]
+
+### Added
+
+- Added Sensitivity Labels to Unified Group Creation #536 [NikoMix - Niko]
+- Added support to provisioning site collections using the classic site collection creation APIs from within a tenant template [jansenbe - Bert Jansen]
+
+### Changed
+
+- Fixing GetGroupMembers and GetGroupOwners #490 [koenzomers - Koen Zomers]
+- Fix for false positive exception logging in GetPrincipalUniqueRoleAssignments #495 [patrikhellgren - Patrik Hellgren]
+- Fix for missing token for newly created list content type #496 [patrikhellgren - Patrik Hellgren]
+- Fix for issue #500, unable to ensure folder with path characters #501 [jimmywim - Jim Love]
+- Use redirectUrl if specified #503 [wobba - Mikael Svenson]
+- Support default column lookup #504 [wobba - Mikael Svenson]
+- Fix for issue with empty description in UserCustomActions #505 [czullu - Christian Zuellig]
+- Fix UrlEncode/Decode Issues with special char #506 [czullu - Christian Zuellig]
+- Fix for IsFeatureActiveInternal when Feature does not exist for the Template #507 [czullu - Christian Zuellig]
+- Add TEAMCHANNEL#1 to BaseTemplates #508 [czullu - Christian Zuellig]
+- Implemented token parsing of team channel name and description #510 [patrikhellgren - Patrik Hellgren]
+- Adding top instruction for ListUsers to avoid throttling #513 [koenzomers - Koen Zomers]
+- CreateFolderInList Handle Error "To update this folder, go to the channel in Microsoft Teams" #470 [czullu - Christian Zuellig]
+- Switched to using version 1.9 of image webpart, needed to ensure images are correctly sized on target pages [jansenbe - Bert Jansen]
+- Retry on SocketExcetion in SendAsync #528 [patrikhellgren - Patrik Hellgren]
+- Fixing issue when trying to export datarow for list instances #531 [magarma - Miguel Angel García Martínez]
+- Fix issues exporting channels and tabs with TeamsAppId and Description #532 [magarma - Miguel Angel García Martínez]
+- Changed the property we get when exporting Teams apps #533 [magarma - Miguel Angel García Martínez]
+- Fix for Null Exception when trying to set a term value in a file, listItem, and the term label contains a comma #541 [magarma - Miguel Angel García Martínez]
+- Missing HeaderLayoutType implemented #498 [jansenbe - Bert Jansen]
+- Fix equality comparisons in Provisioning model objects #410 [orty - Serge ARADJ]
+- When provisioning pages allow creation of web parts which are not returned as possible web part to add [jansenbe - Bert Jansen]
+- Fix #547 - issue with trace log #548 [gautamdsheth - Gautam Sheth]
+- Fix issue when folderpath doesn't start by '/' #542 [magarma - Miguel Angel García Martínez]
+- Added missing field Type "Geolocation" case in UpdateListItem() #546 [PedroMordeP - Pedro Monte]
+- Setting Teams channel as private according to membershipType #549 [magarma - Miguel Angel García Martínez]
+- Fix for Culture is not supported exception #554 [patrikhellgren - Patrik Hellgren]
+- Added progress logging for provisioning of extensibility handlers #555 [patrikhellgren - Patrik Hellgren]
+- Fix for unauthorized exception in EnsureFolder #556 [patrikhellgren - Patrik Hellgren]
+
 ## [1.7.0]
 
 ### Added

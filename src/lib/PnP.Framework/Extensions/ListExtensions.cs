@@ -1656,7 +1656,11 @@ namespace Microsoft.SharePoint.Client
 
         private static void SetDefaultColumnValuesImplementation(this List list, IEnumerable<IDefaultColumnValue> columnValues)
         {
-            if (columnValues == null || !columnValues.Any()) return;
+            if (columnValues == null || !columnValues.Any())
+            {
+                list.ClearDefaultColumnValues();
+            }
+
             using (var clientContext = list.Context as ClientContext)
             {
                 try
@@ -1831,7 +1835,7 @@ namespace Microsoft.SharePoint.Client
                         foreach (var value in values)
                         {
                             var href = value.Attribute("href").Value;
-                            href = System.Web.HttpUtility.UrlDecode(href);
+                            href = Uri.UnescapeDataString(href);
                             href = href.Replace(list.RootFolder.ServerRelativeUrl, "/").Replace("//", "/");
                             var defaultValues = from d in value.Descendants("DefaultValue") select d;
                             foreach (var defaultValue in defaultValues)
@@ -1991,23 +1995,26 @@ namespace Microsoft.SharePoint.Client
 
                 // Check if default values file is present
                 var formsFolder = list.RootFolder.Folders.FirstOrDefault(x => x.Name == "Forms");
-                var configFile = formsFolder.Files.GetByUrl(defaultValuesFileName);
-                clientContext.Load(configFile, c => c.Exists);
-                bool fileExists = false;
-                try
+                if (formsFolder != null)
                 {
-                    clientContext.ExecuteQueryRetry();
-                    fileExists = true;
-                }
-                catch
-                {
-                    // Do nothing here
-                }
+                    var configFile = formsFolder.Files.GetByUrl(defaultValuesFileName);
+                    clientContext.Load(configFile, c => c.Exists);
+                    bool fileExists = false;
+                    try
+                    {
+                        clientContext.ExecuteQueryRetry();
+                        fileExists = true;
+                    }
+                    catch
+                    {
+                        // Do nothing here
+                    }
 
-                if (fileExists)
-                {
-                    configFile.DeleteObject();
-                    clientContext.ExecuteQueryRetry();
+                    if (fileExists)
+                    {
+                        configFile.DeleteObject();
+                        clientContext.ExecuteQueryRetry();
+                    }
                 }
             }
         }
@@ -2052,7 +2059,7 @@ namespace Microsoft.SharePoint.Client
                         foreach (var value in values)
                         {
                             var href = value.Attribute("href").Value;
-                            href = System.Web.HttpUtility.UrlDecode(href);
+                            href = Uri.UnescapeDataString(href);
 
                             href = href.Replace(list.RootFolder.ServerRelativeUrl, "/").Replace("//", "/");
                             var defaultValues = from d in value.Descendants("DefaultValue") select d;
@@ -2184,7 +2191,7 @@ namespace Microsoft.SharePoint.Client
                         foreach (var value in values)
                         {
                             var href = value.Attribute("href").Value;
-                            href = System.Web.HttpUtility.UrlDecode(href);
+                            href = Uri.UnescapeDataString(href);
                             href = href.Replace(list.RootFolder.ServerRelativeUrl, "/").Replace("//", "/");
 
                             var defaultValues = from d in value.Descendants("DefaultValue") select d;

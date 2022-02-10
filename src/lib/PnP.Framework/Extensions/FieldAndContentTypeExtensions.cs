@@ -827,7 +827,7 @@ namespace Microsoft.SharePoint.Client
                     Text = values
                 };
             }
-            else if (field.TypeAsString == "UserMulti")
+            else if (field.TypeAsString == "UserMulti" || field.TypeAsString == "Lookup")
             {
                 var values = string.Join(";#", value);
                 defaultColumnValue = new DefaultColumnTextValue()
@@ -859,13 +859,15 @@ namespace Microsoft.SharePoint.Client
                         terms.Add(term);
                     }
                 }
+
+                defaultColumnValue = new DefaultColumnTermValue()
+                {
+                    FieldInternalName = field.InternalName,
+                    FolderRelativePath = folderRelativePath,
+                };
+
                 if (terms.Any())
                 {
-                    defaultColumnValue = new DefaultColumnTermValue()
-                    {
-                        FieldInternalName = field.InternalName,
-                        FolderRelativePath = folderRelativePath,
-                    };
                     terms.ForEach(t => ((DefaultColumnTermValue)defaultColumnValue).Terms.Add(t));
                 }
             }

@@ -399,6 +399,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             string defaultContentTypeId)
         {
             var itemCount = 1;
+            var listDefaultColumnValues = siteList.GetDefaultColumnValues();
+
             foreach (var item in items)
             {
                 switch (item.FileSystemObjectType)
@@ -412,7 +414,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     case FileSystemObjectType.Folder:
                         {
                             //PnP:Folder
-                            ProcessFolderRow(web, item, siteList, listInstance, queryConfig, template, scope);
+                            ProcessFolderRow(web, item, siteList, listInstance, queryConfig, listDefaultColumnValues, template, scope);
                             break;
                         }
                     default:
@@ -468,8 +470,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                                     if (!string.IsNullOrWhiteSpace(url) && !string.IsNullOrWhiteSpace(contentTypeId))
                                     {
                                         var fullUri = new Uri(baseUri, url.Replace("{site}", baseUri.AbsolutePath.TrimEnd('/')));
-                                        var folderPath = HttpUtility.UrlDecode(fullUri.Segments.Take(fullUri.Segments.Length - 1).ToArray().Aggregate((i, x) => i + x).TrimEnd('/'));
-                                        var fileName = HttpUtility.UrlDecode(fullUri.Segments[fullUri.Segments.Length - 1]);
+                                        var folderPath = Uri.UnescapeDataString(fullUri.Segments.Take(fullUri.Segments.Length - 1).ToArray().Aggregate((i, x) => i + x).TrimEnd('/'));
+                                        var fileName = Uri.UnescapeDataString(fullUri.Segments[fullUri.Segments.Length - 1]);
 
                                         var templateFolderPath = folderPath.Substring(web.ServerRelativeUrl.Length).TrimStart('/');
 
@@ -511,8 +513,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
             // If we got here it's a file, let's grab the file's path and name
             var fullUri = new Uri(baseUri, myFile.ServerRelativePath.DecodedUrl);
-            var folderPath = System.Web.HttpUtility.UrlDecode(fullUri.Segments.Take(fullUri.Segments.Length - 1).ToArray().Aggregate((i, x) => i + x).TrimEnd('/'));
-            var fileName = System.Web.HttpUtility.UrlDecode(fullUri.Segments[fullUri.Segments.Length - 1]);
+            var folderPath = Uri.UnescapeDataString(fullUri.Segments.Take(fullUri.Segments.Length - 1).ToArray().Aggregate((i, x) => i + x).TrimEnd('/'));
+            var fileName = Uri.UnescapeDataString(Path.GetFileName(fullUri.AbsoluteUri));
 
             var templateFolderPath = folderPath.Substring(web.ServerRelativeUrl.Length).TrimStart("/".ToCharArray());
 
@@ -610,7 +612,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             // We process real values only
                             if (value != null && !String.IsNullOrEmpty(value) && value != "[]")
                             {
-                                pnpFile.Properties.Add(fieldValue.Key, value);
+                                pnpFile.Properties[fieldValue.Key] = value;
                             }
                         }
                     }
@@ -705,7 +707,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             return value;
         }
 
-        public Model.Folder ExtractFolderSettings(Web web, List siteList, string serverRelativePathToFolder, PnPMonitoredScope scope, Model.Configuration.Lists.Lists.ExtractListsQueryConfiguration queryConfig)
+        public Model.Folder ExtractFolderSettings(Web web, List siteList, List<Dictionary<string, string>> listDefaultValues, string serverRelativePathToFolder, PnPMonitoredScope scope, Model.Configuration.Lists.Lists.ExtractListsQueryConfiguration queryConfig)
         {
             Model.Folder pnpFolder = null;
             try
@@ -806,6 +808,19 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         }
                     }
                 }
+
+                //export PnPFolder default values
+                if (listDefaultValues != null)
+                {
+                    var href = Uri.UnescapeDataString(spFolder.ServerRelativeUrl);
+                    href = href.Replace(siteList.RootFolder.ServerRelativeUrl, "/").Replace("//", "/");
+
+                    var defaultValues = listDefaultValues.Where(dv => dv["Path"] == href);
+                    foreach (var defaultValue in defaultValues)
+                    {
+                        pnpFolder.DefaultColumnValues.Add(defaultValue["Field"], defaultValue["Value"]);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -814,7 +829,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             return pnpFolder;
         }
 
-        private void ProcessFolderRow(Web web, ListItem listItem, List siteList, ListInstance listInstance, Model.Configuration.Lists.Lists.ExtractListsQueryConfiguration queryConfig, ProvisioningTemplate template, PnPMonitoredScope scope)
+        private void ProcessFolderRow(Web web, ListItem listItem, List siteList, ListInstance listInstance, Model.Configuration.Lists.Lists.ExtractListsQueryConfiguration queryConfig, List<Dictionary<string, string>> listDefaultValues, ProvisioningTemplate template, PnPMonitoredScope scope)
         {
             listItem.EnsureProperties(it => it.ParentList.RootFolder.ServerRelativeUrl);
             string serverRelativeListUrl = listItem.ParentList.RootFolder.ServerRelativeUrl;
@@ -833,7 +848,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         if (pnpFolder == null)
                         {
                             string pathToCurrentFolder = string.Format("{0}/{1}", serverRelativeListUrl, string.Join("/", folderSegments.Take(i + 1)));
-                            pnpFolder = ExtractFolderSettings(web, siteList, pathToCurrentFolder, scope, queryConfig);
+                            pnpFolder = ExtractFolderSettings(web, siteList, listDefaultValues, pathToCurrentFolder, scope, queryConfig);
                             listInstance.Folders.Add(pnpFolder);
                         }
                     }
@@ -843,7 +858,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         if (childFolder == null)
                         {
                             string pathToCurrentFolder = string.Format("{0}/{1}", serverRelativeListUrl, string.Join("/", folderSegments.Take(i + 1)));
-                            childFolder = ExtractFolderSettings(web, siteList, pathToCurrentFolder, scope, queryConfig);
+                            childFolder = ExtractFolderSettings(web, siteList, listDefaultValues, pathToCurrentFolder, scope, queryConfig);
                             pnpFolder.Folders.Add(childFolder);
                         }
                         pnpFolder = childFolder;
@@ -909,7 +924,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 foreach (var attachmentFile in item.AttachmentFiles)
                 {
                     var fullUri = new Uri(baseUri, attachmentFile.ServerRelativePath.DecodedUrl);
-                    var folderPath = HttpUtility.UrlDecode(fullUri.Segments.Take(fullUri.Segments.Length - 1).ToArray().Aggregate((i, x) => i + x).TrimEnd('/'));
+                    var folderPath = Uri.UnescapeDataString(fullUri.Segments.Take(fullUri.Segments.Length - 1).ToArray().Aggregate((i, x) => i + x).TrimEnd('/'));
                     var targetFolder = $"ListData/SITE_{web.Id.ToString("N")}/LIST_{siteList.Id.ToString("N")}/Attachments/{item.Id}";
                     dataRow.Attachments.Add(new Model.SharePoint.InformationArchitecture.DataRowAttachment()
                     {
@@ -929,7 +944,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         {
             if (creationInfo.FileConnector != null)
             {
-                var targetContainer = HttpUtility.UrlDecode(targetFolder).Trim('/').Replace("/", "\\");
+                var targetContainer = Uri.UnescapeDataString(targetFolder).Trim('/').Replace("/", "\\");
 
                 using (Stream s = GetAttachmentStream((ClientContext)web.Context, fileServerRelativeUrl))
                 {

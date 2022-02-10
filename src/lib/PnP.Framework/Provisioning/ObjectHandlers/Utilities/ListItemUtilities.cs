@@ -1,4 +1,4 @@
-﻿using Microsoft.SharePoint.Client;
+using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Taxonomy;
 using PnP.Framework.Diagnostics;
 using PnP.Framework.Utilities;
@@ -420,7 +420,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                                             clonedContext.Load(taxonomyItem);
                                             clonedContext.ExecuteQueryRetry();
                                         }
-                                        terms.Add(new KeyValuePair<Guid, string>(taxonomyItem.Id, taxonomyItem.Name));
+                                        if (taxonomyItem != null)
+                                        {
+                                            terms.Add(new KeyValuePair<Guid, string>(taxonomyItem.Id, taxonomyItem.Name));
+                                        }
                                     }
 
                                     TaxonomyField taxField = context.CastTo<TaxonomyField>(field);
@@ -533,6 +536,30 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                                     itemValues.Add(new FieldUpdateValue(key, urlValue));
                                 }
 
+                                break;
+                            }
+                        case "Geolocation":
+                            {
+                                if (value == null) goto default;
+                                // FieldGeolocationValue - Expected format: Altitude,Latitude,Longitude,Measure
+                                var geolocationArray = value.Split(',');
+                                if (geolocationArray.Length == 4)
+                                {
+                                    var geolocationValue = new FieldGeolocationValue
+                                    {
+                                        Altitude = Double.Parse(geolocationArray[0]),
+                                        Latitude = Double.Parse(geolocationArray[1]),
+                                        Longitude = Double.Parse(geolocationArray[2]),
+                                        Measure = Double.Parse(geolocationArray[3]),
+                                    };
+
+                                    itemValues.Add(new FieldUpdateValue(key, geolocationValue));
+                                }
+                                else
+                                {
+                                    itemValues.Add(new FieldUpdateValue(key, value));
+                                }
+                               
                                 break;
                             }
                         default:
