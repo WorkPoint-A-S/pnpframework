@@ -6,11 +6,23 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## Unreleased
+
+### Added
+
+- Added async counterparts for PnP SDK interop. #639 [s-KaiNet - Sergei Sergeev]
+- Added GetSitePropertiesById functionality to TenantExtensions #638 [koenzomers - Koen Zomers]
+
+### Changed
+
+
+## [1.9.0]
 
 ### Added
 
 - Support export folder default values #583 [magarma - Miguel Angel García Martínez]
+- Added RequestTemporaryAccessPass method to UsersUtility #605 [koenzomers - Koen Zomers]
+- Transformation: added specific page layout transformation #614 [robi26 - Stephan Steiger]
 
 ### Changed
 
@@ -24,6 +36,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - Fix Clear-PnPDefaultColumnValues not working with taxonomy fields #576 [jackpoz - Giacomo Pozzoni]
 - Files tab teams first load after creation #588 [roberAlb - Roberto Ramon]
 - Adding beta option to MS Graph Users functions #586 [koenzomers - Koen Zomers]
+- Added ignoreDefaultProperties to UsersUtility #590 [koenzomers - Koen Zomers]
+- Rewrite of the get user delta #602 [koenzomers - Koen Zomers]
+- Fix ProcessDataRow ignore html fields as empty even they are not #604 [czullu - Christian Zuellig]
+- Fix caching issues with retrieving taxonomy fields on modernization caching #603 [erosu-hab - Elena Rosu]
+- Retrieve the target list by url for handler ObjectListInstanceDataRows #607 [BollietMZK]
+- Fix exception thrown when a Taxonomy Term owner was not found #628 [jackpoz - Giacomo Pozzoni]
 
 ## [1.8.0]
 
