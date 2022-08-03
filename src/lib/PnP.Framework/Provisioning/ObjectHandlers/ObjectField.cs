@@ -92,13 +92,14 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     var fieldSchemaElement = XElement.Parse(parser.ParseXmlString(field.SchemaXml));
                     var fieldId = fieldSchemaElement.Attribute("ID").Value;
                     var fieldInternalName = fieldSchemaElement.Attribute("InternalName")?.Value ?? fieldSchemaElement.Attribute("Name")?.Value;
-                    WriteSubProgress("Field", !string.IsNullOrWhiteSpace(fieldInternalName) ? fieldInternalName : fieldId, currentFieldIndex, fields.Count);
+                    var fieldIdentifier = !string.IsNullOrWhiteSpace(fieldInternalName) ? fieldInternalName : fieldId;
+                    WriteSubProgress("Field", fieldIdentifier, currentFieldIndex, fields.Count);
                     if (!existingFieldIds.Contains(Guid.Parse(fieldId)))
                     {
                         try
                         {
                             scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_Fields_Adding_field__0__to_site, fieldId);
-                            CreateField(web, fieldSchemaElement, scope, parser, field.SchemaXml);
+                            CreateField(web, fieldSchemaElement, scope, parser, field.SchemaXml, fieldIdentifier);
                         }
                         catch (Exception ex)
                         {
@@ -111,7 +112,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         try
                         {
                             scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_Fields_Updating_field__0__in_site, fieldId);
-                            UpdateField(web, fieldId, fieldSchemaElement, scope, parser, field.SchemaXml);
+                            UpdateField(web, fieldId, fieldSchemaElement, scope, parser, field.SchemaXml, fieldIdentifier);
                         }
                         catch (Exception ex)
                         {
@@ -125,7 +126,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             return parser;
         }
 
-        private void UpdateField(Web web, string fieldId, XElement templateFieldElement, PnPMonitoredScope scope, TokenParser parser, string originalFieldXml)
+        private void UpdateField(Web web, string fieldId, XElement templateFieldElement, PnPMonitoredScope scope, TokenParser parser, string originalFieldXml, string fieldIdentifier = "")
         {
             var existingField = web.Fields.GetById(Guid.Parse(fieldId));
             web.Context.Load(existingField, f => f.SchemaXml);
@@ -245,6 +246,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     {
                         // The field Xml was found invalid
                         var tokenString = parser.GetLeftOverTokens(originalFieldXml).Aggregate(String.Empty, (acc, i) => acc + " " + i);
+                        if (!string.IsNullOrEmpty(fieldIdentifier))
+                        {
+                            tokenString = fieldIdentifier;
+                        }
                         scope.LogError("The field was found invalid: {0}", tokenString);
                         throw new Exception($"The field was found invalid: {tokenString}");
                     }
@@ -325,7 +330,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             return schemaXml;
         }
 
-        private static void CreateField(Web web, XElement templateFieldElement, PnPMonitoredScope scope, TokenParser parser, string originalFieldXml)
+        private static void CreateField(Web web, XElement templateFieldElement, PnPMonitoredScope scope, TokenParser parser, string originalFieldXml, string fieldIdentifier = "")
         {
             var fieldXml = parser.ParseXmlString(templateFieldElement.ToString());
 
@@ -379,6 +384,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             {
                 // The field Xml was found invalid
                 var tokenString = parser.GetLeftOverTokens(fieldXml).Aggregate(String.Empty, (acc, i) => acc + " " + i);
+                if(!string.IsNullOrEmpty(fieldIdentifier))
+                {
+                    tokenString = fieldIdentifier;
+                }
                 scope.LogError("The field was found invalid: {0}", tokenString);
                 throw new Exception($"The field was found invalid: {tokenString}");
             }

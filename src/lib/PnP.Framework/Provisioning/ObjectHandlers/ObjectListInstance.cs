@@ -436,7 +436,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             try
                             {
                                 scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_ListInstances_Creating_field__0_, fieldGuid);
-                                var createdField = CreateField(fieldElement, listInfo, parser, field.SchemaXml, (ClientContext)web.Context, scope);
+                                var createdField = CreateField(fieldElement, listInfo, parser, field.SchemaXml, (ClientContext)web.Context, scope, internalName);
                                 if (createdField != null)
                                 {
                                     createdField.EnsureProperties(f => f.InternalName, f => f.Title, f => f.Id);
@@ -457,7 +457,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             try
                             {
                                 scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_ListInstances_Updating_field__0_, fieldGuid);
-                                var updatedField = UpdateField(web, listInfo, fieldGuid, fieldElement, fieldFromList, scope, parser, field.SchemaXml);
+                                var updatedField = UpdateField(web, listInfo, fieldGuid, fieldElement, fieldFromList, scope, parser, field.SchemaXml, internalName);
                                 if (updatedField != null)
                                 {
                                     updatedField.EnsureProperties(f => f.InternalName, f => f.Title, f => f.Id);
@@ -1050,7 +1050,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             return createdField;
         }
 
-        private static Field CreateField(XElement fieldElement, ListInfo listInfo, TokenParser parser, string originalFieldXml, ClientContext context, PnPMonitoredScope scope)
+        private static Field CreateField(XElement fieldElement, ListInfo listInfo, TokenParser parser, string originalFieldXml, ClientContext context, PnPMonitoredScope scope, string fieldIdentifier = "")
         {
             Field field = null;
             fieldElement = PrepareField(fieldElement);
@@ -1096,13 +1096,17 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             {
                 // The field Xml was found invalid
                 var tokenString = parser.GetLeftOverTokens(originalFieldXml).Aggregate(String.Empty, (acc, i) => acc + " " + i);
+                if (!string.IsNullOrEmpty(fieldIdentifier))
+                {
+                    tokenString = fieldIdentifier;
+                }
                 scope.LogError("The field was found invalid: {0}", tokenString);
                 throw new Exception($"The field was found invalid: {tokenString}");
             }
             return field;
         }
 
-        private Field UpdateField(Web web, ListInfo listInfo, Guid fieldId, XElement templateFieldElement, Field existingField, PnPMonitoredScope scope, TokenParser parser, string originalFieldXml)
+        private Field UpdateField(Web web, ListInfo listInfo, Guid fieldId, XElement templateFieldElement, Field existingField, PnPMonitoredScope scope, TokenParser parser, string originalFieldXml, string fieldIdentifier = "")
         {
             Field field = null;
             web.Context.Load(existingField, f => f.SchemaXmlWithResourceTokens);
@@ -1190,6 +1194,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     {
                         // The field Xml was found invalid
                         var tokenString = parser.GetLeftOverTokens(originalFieldXml).Aggregate(String.Empty, (acc, i) => acc + " " + i);
+                        if (!string.IsNullOrEmpty(fieldIdentifier))
+                        {
+                            tokenString = fieldIdentifier;
+                        }
                         scope.LogError("The field was found invalid: {0}", tokenString);
                         throw new Exception($"The field was found invalid: {tokenString}");
                     }
