@@ -1017,7 +1017,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 output = ReToken.Replace(output, match =>
                 {
                     string tokenString = match.Groups[0].Value;
-                    if (TokenDictionary.TryGetValue(tokenString, out string val))
+                    if (TokenDictionary.TryGetValue(tokenString, out string val) && tokenString != val)
                     {
                         hasMatch = true;
                         return val;
