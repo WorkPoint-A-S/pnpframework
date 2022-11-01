@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace PnP.Framework.Diagnostics
@@ -242,7 +243,9 @@ namespace PnP.Framework.Diagnostics
         /// </summary>
         /// <param name="source">Source of event</param>
         /// <param name="message">Message to log</param>
-        public static void Warning(string source, string message)
+        /// <param name="loggingTag">Custom object to log</param>
+        /// <param name="properties">Custom Properties to Log</param>
+        public static void Warning(string source, string message, object loggingTag = null, Dictionary<string, string> properties = null)
         {
             InitializeLogger();
             if(ShouldLog(LogLevel.Warning))
@@ -250,7 +253,9 @@ namespace PnP.Framework.Diagnostics
                 _logger.Warning(new LogEntry()
                 {
                     Message = message,
-                    Source = source
+                    Source = source,
+                    LoggingTag = loggingTag,
+                    Properties = properties
                 });
             }
         }

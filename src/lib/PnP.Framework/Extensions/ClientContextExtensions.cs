@@ -156,6 +156,7 @@ namespace Microsoft.SharePoint.Client
                 }
                 catch (WebException wex)
                 {
+                    Dictionary<string, string> properties = new Dictionary<string, string>();
                     var response = wex.Response as HttpWebResponse;
                     // Check if request was throttled - http status code 429
                     // Check is request failed due to server unavailable - http status code 503
@@ -176,7 +177,14 @@ namespace Microsoft.SharePoint.Client
                             if (int.TryParse(response.Headers["Retry-After"], out int retryAfterHeaderValue))
                             {
                                 retryAfterInterval = retryAfterHeaderValue * 1000;
+                                properties["Retry-After"] = response.Headers["Retry-After"];
                             }
+                            if (response.Headers["RateLimit-Limit"] != null)
+                                properties["RateLimit-Limit"] = response.Headers["RateLimit-Limit"];
+                            if (response.Headers["RateLimit-Remaining"] != null)
+                                properties["RateLimit-Remaining"] = response.Headers["RateLimit-Remaining"];
+                            if (response.Headers["RateLimit-Reset"] != null)
+                                properties["RateLimit-Reset"] = response.Headers["RateLimit-Reset"];
                         }
                         else
                         {
@@ -186,11 +194,11 @@ namespace Microsoft.SharePoint.Client
 
                         if (wex.Status == WebExceptionStatus.Timeout)
                         {
-                            Log.Warning(Constants.LOGGING_SOURCE, $"CSOM request timeout. Retry attempt {retryAttempts + 1}. Sleeping for {retryAfterInterval} milliseconds before retrying.");
+                            Log.Warning(Constants.LOGGING_SOURCE, $"CSOM request timeout. Retry attempt {retryAttempts + 1}. Sleeping for {retryAfterInterval} milliseconds before retrying.", clientContext, properties);
                         }
                         else
                         {
-                            Log.Warning(Constants.LOGGING_SOURCE, $"CSOM request frequency exceeded usage limits. Retry attempt {retryAttempts + 1}. Sleeping for {retryAfterInterval} milliseconds before retrying.");
+                            Log.Warning(Constants.LOGGING_SOURCE, $"CSOM request frequency exceeded usage limits. Retry attempt {retryAttempts + 1}. Sleeping for {retryAfterInterval} milliseconds before retrying.", clientContext, properties);
                         }
 
                         await Task.Delay(retryAfterInterval);
@@ -216,7 +224,7 @@ namespace Microsoft.SharePoint.Client
                             errorSb.AppendLine($"SocketErrorCode: {socketEx.SocketErrorCode}"); //ConnectionReset
                             errorSb.AppendLine($"Message: {socketEx.Message}"); //An existing connection was forcibly closed by the remote host
                             Log.Error(Constants.LOGGING_SOURCE, CoreResources.ClientContextExtensions_ExecuteQueryRetryException, errorSb.ToString());
-                            
+
                             //retry
                             wrapper = (ClientRequestWrapper)wex.Data["ClientRequest"];
                             retry = true;
@@ -228,7 +236,14 @@ namespace Microsoft.SharePoint.Client
                                 if (int.TryParse(response.Headers["Retry-After"], out int retryAfterHeaderValue))
                                 {
                                     retryAfterInterval = retryAfterHeaderValue * 1000;
+                                    properties["Retry-After"] = response.Headers["Retry-After"];
                                 }
+                                if (response.Headers["RateLimit-Limit"] != null)
+                                    properties["RateLimit-Limit"] = response.Headers["RateLimit-Limit"];
+                                if (response.Headers["RateLimit-Remaining"] != null)
+                                    properties["RateLimit-Remaining"] = response.Headers["RateLimit-Remaining"];
+                                if (response.Headers["RateLimit-Reset"] != null)
+                                    properties["RateLimit-Reset"] = response.Headers["RateLimit-Reset"];
                             }
                             else
                             {
@@ -236,7 +251,7 @@ namespace Microsoft.SharePoint.Client
                                 backoffInterval *= 2;
                             }
 
-                            Log.Warning(Constants.LOGGING_SOURCE, $"CSOM request socket exception. Retry attempt {retryAttempts + 1}. Sleeping for {retryAfterInterval} milliseconds before retrying.");
+                            Log.Warning(Constants.LOGGING_SOURCE, $"CSOM request socket exception. Retry attempt {retryAttempts + 1}. Sleeping for {retryAfterInterval} milliseconds before retrying.", clientContext, properties);
 
                             await Task.Delay(retryAfterInterval);
 
