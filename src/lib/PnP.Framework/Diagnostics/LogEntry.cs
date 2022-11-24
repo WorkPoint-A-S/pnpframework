@@ -32,13 +32,5 @@ namespace PnP.Framework.Diagnostics
         /// Gets or sets elapsed Log time in MilliSeconds
         /// </summary>
         public long EllapsedMilliseconds { get; set; }
-        /// <summary>
-        /// Gets or sets custom object for logging
-        /// </summary>
-        public object LoggingTag { get; set; }
-        /// <summary>
-        /// Gets or sets custom properties for logging
-        /// </summary>
-        public Dictionary<string, string> Properties { get; set; }
     }
 }
