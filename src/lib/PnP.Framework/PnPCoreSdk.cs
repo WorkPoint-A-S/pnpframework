@@ -15,7 +15,7 @@ namespace PnP.Framework
     {
 
         private static readonly Lazy<PnPCoreSdk> _lazyInstance = new Lazy<PnPCoreSdk>(() => new PnPCoreSdk(), true);
-        private IPnPContextFactory pnpContextFactoryCache;
+        internal IPnPContextFactory pnpContextFactoryCache;
         private static readonly SemaphoreSlim semaphoreSlimFactory = new SemaphoreSlim(1);
         internal static ILegacyAuthenticationProviderFactory AuthenticationProviderFactory { get; set; } = new PnPCoreSdkAuthenticationProviderFactory();
         internal static event EventHandler<IServiceCollection> OnDIContainerBuilding;
@@ -42,17 +42,18 @@ namespace PnP.Framework
         /// Get's a PnPContext from a CSOM ClientContext
         /// </summary>
         /// <param name="context">CSOM ClientContext</param>
+        /// <param name="existingFactory">An existing factory to use for PnPContext creation, instead of an internal one.</param>
         /// <returns>The equivalent PnPContext</returns>
-        public async Task<PnPContext> GetPnPContextAsync(ClientContext context)
+        public async Task<PnPContext> GetPnPContextAsync(ClientContext context, IPnPContextFactory existingFactory = null)
         {
             Uri ctxUri = new Uri(context.Url);
-           
+
             var ctxSettings = context.GetContextSettings();
-            
-            if (ctxSettings!=null && ctxSettings.Type == Utilities.Context.ClientContextType.PnPCoreSdk && ctxSettings.AuthenticationManager!=null)
+
+            if (ctxSettings != null && ctxSettings.Type == Utilities.Context.ClientContextType.PnPCoreSdk && ctxSettings.AuthenticationManager != null)
             {
                 var pnpContext = ctxSettings.AuthenticationManager.PnPCoreContext;
-                if (pnpContext != null)
+                if (pnpContext != null && pnpContext.Uri == ctxUri)
                 {
                     return pnpContext;
                 }
@@ -61,12 +62,31 @@ namespace PnP.Framework
                     var iAuthProvider = ctxSettings.AuthenticationManager.PnPCoreAuthenticationProvider;
                     if (iAuthProvider != null)
                     {
-                        var factory0 = BuildContextFactory();
+                        IPnPContextFactory factory0;
+                        if (existingFactory != null)
+                        {
+                            // use the provided factory for all upcoming PnPContext creations, also the ones driven internally from PnP Framework
+                            pnpContextFactoryCache = existingFactory;
+                            factory0 = existingFactory;
+                        }
+                        else
+                        {
+                            factory0 = BuildContextFactory();                            
+                        }
+                        
                         return await factory0.CreateAsync(ctxUri, iAuthProvider).ConfigureAwait(false);
+
                     }
                 }
             }
-            var factory = BuildContextFactory();
+
+            if (existingFactory != null)
+            {
+                // use the provided factory for all upcoming PnPContext creations, also the ones driven internally from PnP Framework
+                pnpContextFactoryCache = existingFactory;                
+            }
+            
+            var factory = existingFactory ?? BuildContextFactory();
             return await factory.CreateAsync(ctxUri, AuthenticationProviderFactory.GetAuthenticationProvider(context)).ConfigureAwait(false);
         }
 
@@ -74,10 +94,11 @@ namespace PnP.Framework
         /// Get's a PnPContext from a CSOM ClientContext
         /// </summary>
         /// <param name="context">CSOM ClientContext</param>
+        /// <param name="existingFactory">An existing factory to use for PnPContext creation, instead of an internal one.</param>
         /// <returns>The equivalent PnPContext</returns>
-        public PnPContext GetPnPContext(ClientContext context)
+        public PnPContext GetPnPContext(ClientContext context, IPnPContextFactory existingFactory = null)
         {
-            return GetPnPContextAsync(context).GetAwaiter().GetResult();
+            return GetPnPContextAsync(context, existingFactory).GetAwaiter().GetResult();
         }
 
         private IPnPContextFactory BuildContextFactory()
@@ -103,13 +124,13 @@ namespace PnP.Framework
                 }).Services;
 
                 // Enables to plug in additional services into this service container
-                if(OnDIContainerBuilding != null)
+                if (OnDIContainerBuilding != null)
                 {
                     OnDIContainerBuilding.Invoke(this, services);
                 }
 
                 var serviceProvider = services.BuildServiceProvider();
-                
+
                 // Get a PnP context factory
                 var pnpContextFactory = serviceProvider.GetRequiredService<IPnPContextFactory>();
 

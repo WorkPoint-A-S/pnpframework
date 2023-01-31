@@ -439,6 +439,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     {
                         continue;
                     }
+
                     sectionCount++;
                     switch (section.Type)
                     {
@@ -480,15 +481,17 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             break;
                     }
 
-                    var addedSection = page.Sections.LastOrDefault();
-                    if (addedSection != null)
+                    // Configure collapsible section, if needed
+                    if (section.Collapsible)
                     {
-                        addedSection.Collapsible = section.Collapsible;
-                        addedSection.DisplayName = section.DisplayName;
-                        addedSection.IconAlignment = section.IconAlignment;
-                        addedSection.IsExpanded = section.IsExpanded;
-                        addedSection.ShowDividerLine = section.ShowDividerLine;
-                        addedSection.ZoneEmphasis = section.ZoneEmphasis;
+                        var targetSection = page.Sections[sectionCount];
+                        targetSection.Collapsible = section.Collapsible;
+                        targetSection.IsExpanded = section.IsExpanded;
+                        targetSection.DisplayName = section.DisplayName;
+                        targetSection.IconAlignment = (PnP.Core.Model.SharePoint.IconAlignment)Enum.Parse(
+                            typeof(PnP.Core.Model.SharePoint.IconAlignment), 
+                            section.IconAlignment.ToString());
+                        targetSection.ShowDividerLine = section.ShowDividerLine;
                     }
 
                     // Add controls to the section
@@ -653,6 +656,51 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                                         case WebPartType.Spacer:
                                             webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.Spacer);
                                             break;
+                                        case WebPartType.Kindle:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.Kindle);
+                                            break;
+                                        case WebPartType.MyFeed:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.MyFeed);
+                                            break;
+                                        case WebPartType.OrgChart:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.OrgChart);
+                                            break;
+                                        case WebPartType.SavedForLater:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.SavedForLater);
+                                            break;
+                                        case WebPartType.Twitter:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.Twitter);
+                                            break;
+                                        case WebPartType.WorldClock:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.WorldClock);
+                                            break;
+                                        case WebPartType.SpacesDocLib:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.SpacesDocLib);
+                                            break;
+                                        case WebPartType.SpacesFileViewer:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.SpacesFileViewer);
+                                            break;
+                                        case WebPartType.SpacesImageViewer:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.SpacesImageViewer);
+                                            break;
+                                        case WebPartType.SpacesModelViewer:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.SpacesModelViewer);
+                                            break;
+                                        case WebPartType.SpacesImageThreeSixty:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.SpacesImageThreeSixty);
+                                            break;
+                                        case WebPartType.SpacesVideoThreeSixty:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.SpacesVideoThreeSixty);
+                                            break;
+                                        case WebPartType.SpacesText2D:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.SpacesText2D);
+                                            break;
+                                        case WebPartType.SpacesVideoPlayer:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.SpacesVideoPlayer);
+                                            break;
+                                        case WebPartType.SpacesPeople:
+                                            webPartName = page.DefaultWebPartToWebPartId(PnPCore.DefaultWebPart.SpacesPeople);
+                                            break;
                                     }
 
                                     baseControl = componentsToAdd.FirstOrDefault(p => p.Name.Equals(webPartName, StringComparison.InvariantCultureIgnoreCase));
@@ -784,7 +832,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     }
 
                     // Clear existing header controls as they'll be overwritten
-                    page.HeaderControls.Clear();
+                    page.HeaderControls.Clear();                    
 
                     // Load existing available controls
                     var componentsToAdd = page.AvailablePageComponents();
@@ -848,34 +896,6 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 }
             }
 
-            // The PnP.Core.Model.SharePoint.CanvasSection class is marked internal, so in order to set the section type we have to use reflection,
-            // unless we want to also maintain a workpoint fork of PnP.core. Exceptions in this section are swallowed,
-            // as I'm not sure how it will behave with sections that are not marked as collapsible.
-            // The section type property must be set to 1 in order for a section to be collapsible.
-            // In PnP.Core, when setting the SectionType property it is done like this: Type = (Section as CanvasSection).SectionType == 0 ? 1 : (Section as CanvasSection).SectionType;
-            // everywhere except the PageWebPart.cs class, which is what we're using here. I can't tell if this is an oversight in PnP.Core or if there is a deeper meaning,
-            // but for now this allows us to replicate collapsible sections and their settings without forking PnP.Core.
-            try
-            {
-                foreach (var section in page.Sections)
-                {
-                    if (section.Collapsible)
-                    {
-                        var pnpCanvasType = Type.GetType("PnP.Core.Model.SharePoint.CanvasSection, PnP.Core");
-                        var sectionTypeProperty = pnpCanvasType.GetProperty("SectionType");
-
-                        var sectionTypeValue = sectionTypeProperty.GetValue(section);
-                        if (sectionTypeValue != null && (int)sectionTypeValue == 0)
-                        {
-                            sectionTypeProperty.SetValue(section, 1);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-
-            }
             // Persist the page
             if (clientSidePage.Layout == "Article" && clientSidePage.PromoteAsTemplate)
             {
@@ -888,7 +908,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
             // Load the page list item
             var fileAfterSave = web.GetFileByServerRelativePath(ResourcePath.FromDecodedUrl(url));
-            web.Context.Load(fileAfterSave, p => p.ListItemAllFields);
+            web.Context.Load(fileAfterSave, p=>p.ListItemAllFields);
             web.Context.ExecuteQueryRetry();
 
             // Update page content type
