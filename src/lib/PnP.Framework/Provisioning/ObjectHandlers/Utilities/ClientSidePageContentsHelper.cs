@@ -26,7 +26,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
         internal const string TopicEntityId = "_EntityId";
         internal const string TopicEntityRelations = "_EntityRelations";
         internal const string TopicEntityType = "_EntityType";
-        
+
         private const string ContentTypeIdField = "ContentTypeId";
 
         public void ExtractClientSidePage(Web web, ProvisioningTemplate template, ProvisioningTemplateCreationInformation creationInfo, PnPMonitoredScope scope, string pageUrl, string pageName, bool isHomePage, bool isTemplate = false)
@@ -168,8 +168,9 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                         CollectImageFilesFromGenericGuids(regexGuidPatternNoDashes, null, regexGuidPatternOptionalBrackets, extractedPageInstance.ThumbnailUrl, thumbnailFileIds);
                         if (thumbnailFileIds.Count == 1)
                         {
-                            try{
-                                
+                            try
+                            {
+
                                 var file = web.GetFileById(thumbnailFileIds[0]);
                                 web.Context.Load(file, f => f.Level, f => f.ServerRelativePath, f => f.UniqueId);
                                 web.Context.ExecuteQueryRetry();
@@ -181,9 +182,9 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                                 {
                                     extractedPageInstance.ThumbnailUrl = Regex.Replace(extractedPageInstance.ThumbnailUrl, file.UniqueId.ToString("N"), $"{{fileuniqueid:{file.ServerRelativePath.DecodedUrl.Substring(web.ServerRelativeUrl.Length).TrimStart("/".ToCharArray())}}}");
                                 }
-                                
+
                             }
-                            catch(ServerException ex)
+                            catch (ServerException ex)
                             {
                                 //Catch File Not found exception if Guid does not match with a file
                                 //There can be a thumbnail image url containing a Guid without having to be an image in the SharePoint site
@@ -211,9 +212,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                             Collapsible = section.Collapsible,
                             DisplayName = section.DisplayName,
                             IsExpanded = section.IsExpanded,
-                            IconAlignment = section.IconAlignment,
-                            ShowDividerLine = section.ShowDividerLine,
-                            ZoneEmphasis = section.ZoneEmphasis
+                            IconAlignment = section.IconAlignment.HasValue && section.IconAlignment.Value == PnPCore.IconAlignment.Right ? IconAlignment.Right : IconAlignment.Left,
+                            ShowDividerLine = section.ShowDividerLine
                         };
                         if (section.VerticalSectionColumn != null)
                         {
