@@ -174,14 +174,13 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         //TODO: Candidate for cleanup
         private Model.File GetTemplateFile(Web web, string serverRelativeUrl)
         {
-
             var webServerUrl = web.EnsureProperty(w => w.Url);
             var serverUri = new Uri(webServerUrl);
             var serverUrl = $"{serverUri.Scheme}://{serverUri.Authority}";
             var fullUri = new Uri(UrlUtility.Combine(serverUrl, serverRelativeUrl));
 
             var folderPath = Uri.UnescapeDataString(fullUri.Segments.Take(fullUri.Segments.Length - 1).ToArray().Aggregate((i, x) => i + x).TrimEnd('/'));
-            var fileName = fullUri.Segments[fullUri.Segments.Length - 1];
+            var fileName = Uri.UnescapeDataString(fullUri.Segments[fullUri.Segments.Length - 1]);
 
             // store as site relative path
             folderPath = folderPath.Replace(web.ServerRelativeUrl, "").Trim('/');
