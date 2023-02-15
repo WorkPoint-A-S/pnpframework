@@ -104,7 +104,6 @@ namespace Microsoft.SharePoint.Client
 
             // Set the TLS preference. Needed on some server os's to work when Office 365 removes support for TLS 1.0
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-
             var clientTag = string.Empty;
             if (clientContext is PnPClientContext)
             {
@@ -362,6 +361,7 @@ namespace Microsoft.SharePoint.Client
             clonedClientContext.ClientTag = clientContext.ClientTag;
             clonedClientContext.DisableReturnValueCache = clientContext.DisableReturnValueCache;
             clonedClientContext.WebRequestExecutorFactory = clientContext.WebRequestExecutorFactory;
+            clonedClientContext.Tag = clientContext.Tag;
 
             // Check if we do have context settings
             var contextSettings = clientContext.GetContextSettings();
