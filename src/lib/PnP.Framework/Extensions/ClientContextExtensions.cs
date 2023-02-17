@@ -421,6 +421,7 @@ namespace Microsoft.SharePoint.Client
                         newClientContext.ClientTag = clientContext.ClientTag;
                         newClientContext.DisableReturnValueCache = clientContext.DisableReturnValueCache;
                         newClientContext.WebRequestExecutorFactory = clientContext.WebRequestExecutorFactory;
+                        newClientContext.Tag = clientContext.Tag;
                         return newClientContext;
                     }
                     else
