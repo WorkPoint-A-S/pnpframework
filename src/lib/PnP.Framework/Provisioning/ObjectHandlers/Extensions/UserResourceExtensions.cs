@@ -87,23 +87,30 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Extensions
 
         public static bool PersistResourceValue(UserResource userResource, string token, ProvisioningTemplate template, ProvisioningTemplateCreationInformation creationInfo)
         {
-            bool returnValue = false;
+			(userResource.Context as ClientContext).Web.EnsureProperty(w => w.Language);
+
+			bool returnValue = false;
             List<Tuple<string, int, string>> resourceTokens = creationInfo.ResourceTokens;
+
             foreach (var language in template.SupportedUILanguages)
             {
-                var culture = new CultureInfo(language.LCID);
+				if (language.LCID == (userResource.Context as ClientContext).Web.Language) //Ignore default language
+					continue;
+
+				var culture = new CultureInfo(language.LCID);
 
                 var value = userResource.GetValueForUICulture(culture.Name);
                 userResource.Context.ExecuteQueryRetry();
                 if (!string.IsNullOrEmpty(value.Value))
                 {
                     returnValue = true;
+
                     resourceTokens.Add(new Tuple<string, int, string>(token, language.LCID, value.Value));
                 }
             }
 
             return returnValue;
-        }
+		}
 
         public static bool PersistResourceValue(string token, int lcid, string title, ProvisioningTemplateCreationInformation creationInfo)
         {
