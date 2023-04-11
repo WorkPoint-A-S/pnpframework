@@ -85,7 +85,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Extensions
             return isDirty;
         }
 
-        public static bool PersistResourceValue(UserResource userResource, string token, ProvisioningTemplate template, ProvisioningTemplateCreationInformation creationInfo)
+        public static bool PersistResourceValue(UserResource userResource, string token, ProvisioningTemplate template, ProvisioningTemplateCreationInformation creationInfo, bool skipWebLanguage)
         {
 			(userResource.Context as ClientContext).Web.EnsureProperty(w => w.Language);
 
@@ -94,7 +94,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Extensions
 
             foreach (var language in template.SupportedUILanguages)
             {
-				if (language.LCID == (userResource.Context as ClientContext).Web.Language) //Ignore default language
+				if (skipWebLanguage && language.LCID == (userResource.Context as ClientContext).Web.Language) //Ignore default language
 					continue;
 
 				var culture = new CultureInfo(language.LCID);

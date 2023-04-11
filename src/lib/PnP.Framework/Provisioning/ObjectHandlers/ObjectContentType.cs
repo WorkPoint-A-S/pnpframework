@@ -964,11 +964,11 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         if (persistLanguages)
                         {
                             var escapedCTName = ct.Name.Replace(" ", "_");
-                            if (UserResourceExtensions.PersistResourceValue(ct.NameResource, $"ContentType_{escapedCTName}_Title", template, creationInfo))
+                            if (UserResourceExtensions.PersistResourceValue(ct.NameResource, $"ContentType_{escapedCTName}_Title", template, creationInfo, false))
                             {
                                 newCT.Name = $"{{res:ContentType_{escapedCTName}_Title}}";
                             }
-                            if (UserResourceExtensions.PersistResourceValue(ct.DescriptionResource, $"ContentType_{escapedCTName}_Description", template, creationInfo))
+                            if (UserResourceExtensions.PersistResourceValue(ct.DescriptionResource, $"ContentType_{escapedCTName}_Description", template, creationInfo, false))
                             {
                                 newCT.Description = $"{{res:ContentType_{escapedCTName}_Description}}";
                             }
