@@ -203,7 +203,7 @@
 	</ItemGroup>
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net5.0' ">
-		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.16.0" />
+		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.18.0" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.0" />
@@ -215,19 +215,19 @@
 	</ItemGroup>
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
-		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.16.0" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.0" />
+		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.18.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-		<PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.1" />
 		<PackageReference Include="System.DirectoryServices" Version="6.0.0" />
 		<PackageReference Include="System.IO.Packaging" Version="6.0.0" />
 	</ItemGroup>
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
-		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.16.0" />
+		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.18.0" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
@@ -242,7 +242,7 @@
 		<!-- Required -->
 		<PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="2.18.4" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-*" PrivateAssets="All" />
-		<PackageReference Include="AngleSharp" Version="0.14.0" />
+		<PackageReference Include="AngleSharp" Version="0.17.0" />
 		<PackageReference Include="AngleSharp.Css" Version="0.14.2" />
 		<PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.1">
@@ -255,9 +255,9 @@
 		<PackageReference Include="Microsoft.Identity.Client" Version="4.36.1" />
 		<PackageReference Include="Microsoft.SharePointOnline.CSOM" Version="16.1.*" />
 		<PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-		<PackageReference Include="PnP.Core" Version="1.8.0" Condition="'$(PnPCoreSdkPath)' == ''" />
+		<PackageReference Include="PnP.Core" Version="1.9.33-nightly" Condition="'$(PnPCoreSdkPath)' == ''" />
 		<PackageReference Include="Portable.Xaml" Version="0.26.0" />
-		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.12.2" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.27.0" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(PnPCoreSdkPath)' != ''">		
