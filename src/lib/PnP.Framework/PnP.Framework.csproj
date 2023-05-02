@@ -253,7 +253,7 @@
 		<PackageReference Include="Microsoft.Graph" Version="3.33.0" />
 		<PackageReference Include="Microsoft.Graph.Core" Version="1.25.1" />
 		<PackageReference Include="Microsoft.Identity.Client" Version="4.36.1" />
-		<PackageReference Include="Microsoft.SharePointOnline.CSOM" Version="16.1.*" />
+		<PackageReference Include="Microsoft.SharePointOnline.CSOM" Version="16.1.23019.12000" />
 		<PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
 		<PackageReference Include="PnP.Core" Version="1.9.33-nightly" Condition="'$(PnPCoreSdkPath)' == ''" />
 		<PackageReference Include="Portable.Xaml" Version="0.26.0" />
