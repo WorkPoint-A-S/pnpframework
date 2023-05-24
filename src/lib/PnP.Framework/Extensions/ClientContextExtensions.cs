@@ -362,6 +362,7 @@ namespace Microsoft.SharePoint.Client
             clonedClientContext.DisableReturnValueCache = clientContext.DisableReturnValueCache;
             clonedClientContext.WebRequestExecutorFactory = clientContext.WebRequestExecutorFactory;
             clonedClientContext.Tag = clientContext.Tag;
+            CloneFormDigestHandlingEnabled(clientContext, clonedClientContext);
 
             // Check if we do have context settings
             var contextSettings = clientContext.GetContextSettings();
@@ -422,6 +423,7 @@ namespace Microsoft.SharePoint.Client
                         newClientContext.DisableReturnValueCache = clientContext.DisableReturnValueCache;
                         newClientContext.WebRequestExecutorFactory = clientContext.WebRequestExecutorFactory;
                         newClientContext.Tag = clientContext.Tag;
+                        CloneFormDigestHandlingEnabled(clientContext, newClientContext);
                         return newClientContext;
                     }
                     else
@@ -512,6 +514,21 @@ namespace Microsoft.SharePoint.Client
             }
 
             return clonedClientContext;
+
+            // FormDigestHandlingEnabled is not available .net standard, but when used from .net framework it is default set to false
+            static void CloneFormDigestHandlingEnabled(ClientRuntimeContext clientContext, ClientContext newClientContext)
+            {
+                var formDigestHandlingEnabledSource = clientContext.GetType().GetProperty("FormDigestHandlingEnabled", BindingFlags.Public | BindingFlags.Instance);
+                if (formDigestHandlingEnabledSource != null && formDigestHandlingEnabledSource.CanRead)
+                {
+                    var value = formDigestHandlingEnabledSource.GetValue(clientContext, null);
+                    var formDigestHandlingEnabledTarget = clientContext.GetType().GetProperty("FormDigestHandlingEnabled", BindingFlags.Public | BindingFlags.Instance);
+                    if (formDigestHandlingEnabledTarget != null && formDigestHandlingEnabledTarget.CanWrite)
+                    {
+                        formDigestHandlingEnabledTarget.SetValue(newClientContext, value, null);
+                    }
+                }
+            }
         }
 
         /// <summary>
