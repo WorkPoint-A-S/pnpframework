@@ -1297,7 +1297,9 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 l => l.ListExperienceOptions,
                 l => l.ReadSecurity,
                 l => l.WriteSecurity,
-                l => l.AdditionalUXProperties);
+                l => l.AdditionalUXProperties,
+                l => l.DisableGridEditing,
+                l => l.ExcludeFromOfflineClient);
 
             web.Context.ExecuteQueryRetry();
 
@@ -1477,8 +1479,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 {
                     isDirty |= existingList.Set(x => x.EnableVersioning, templateList.EnableVersioning);
                 }
-
+                
                 isDirty |= existingList.Set(x => x.NoCrawl, templateList.NoCrawl);
+                isDirty |= existingList.Set(x => x.DisableGridEditing, templateList.DisableGridEditing);
+                isDirty |= existingList.Set(x => x.ExcludeFromOfflineClient, templateList.DisableGridEditing);
 
                 if (isDirty)
                 {
@@ -1766,7 +1770,9 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 //Check that Title and Description have the correct values
                 web.Context.Load(createdList, l => l.Title,
                                               l => l.Description,
-                                              l => l.NoCrawl);
+                                              l => l.NoCrawl,
+                                              l => l.DisableGridEditing,
+                                              l => l.ExcludeFromOfflineClient);
                 web.Context.ExecuteQueryRetry();
                 var isDirty = false;
                 if (!string.Equals(createdList.Description, templateList.Description))
@@ -1986,6 +1992,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             }
 
             createdList.NoCrawl = templateList.NoCrawl;
+            createdList.DisableGridEditing = templateList.DisableGridEditing;
+            createdList.ExcludeFromOfflineClient = templateList.ExcludeFromOfflineClient;
 
             createdList.Update();
 
@@ -2387,6 +2395,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         l => l.ValidationMessage,
                         l => l.DocumentTemplateUrl,
                         l => l.NoCrawl,
+                        l => l.DisableGridEditing,
+                        l => l.ExcludeFromOfflineClient,
                         l => l.ListExperienceOptions,
                         l => l.ReadSecurity,
                         l => l.WriteSecurity,
@@ -2492,6 +2502,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         ValidationMessage = siteList.ValidationMessage,
                         EnableModeration = siteList.EnableModeration,
                         NoCrawl = siteList.NoCrawl,
+                        DisableGridEditing = siteList.DisableGridEditing,
+                        ExcludeFromOfflineClient = siteList.ExcludeFromOfflineClient,
                         ListExperience = (Model.ListExperience)Enum.Parse(typeof(Model.ListExperience), siteList.ListExperienceOptions.ToString()),
                         ReadSecurity = siteList.ReadSecurity,
                         WriteSecurity = siteList.WriteSecurity,

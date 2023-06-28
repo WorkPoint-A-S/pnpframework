@@ -466,6 +466,15 @@ namespace PnP.Framework.Provisioning.Model
         /// </summary>
         public bool EnableClassicAudienceTargeting { get; set; }
 
+        /// <summary>
+        /// Specify whether Quick Edit and Details Pane can be used on this document library to bulk edit data.
+        /// </summary>
+        public bool DisableGridEditing { get; set; }
+        /// <summary>
+        /// Specify whether this document library should be available for offline clients.
+        /// </summary>
+        public bool ExcludeFromOfflineClient { get; set; }
+
         #endregion
 
         #region Comparison code
@@ -476,7 +485,7 @@ namespace PnP.Framework.Provisioning.Model
         /// <returns>Returns HashCode</returns>
         public override int GetHashCode()
         {
-            return (String.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}|{15}|{16}|{17}|{18}|{19}|{20}|{21}|{22}|{23}|{24}|{25}|{26}|{27}|{28}|{29}|{30}|{31}|{32}|{33}|{34}|{35}|{36}|{37}|{38}|{39}|{40}|{41}|{42}|{43}|{44}|{45}|{46}|{47}|{48}|",
+            return (String.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}|{15}|{16}|{17}|{18}|{19}|{20}|{21}|{22}|{23}|{24}|{25}|{26}|{27}|{28}|{29}|{30}|{31}|{32}|{33}|{34}|{35}|{36}|{37}|{38}|{39}|{40}|{41}|{42}|{43}|{44}|{45}|{46}|{47}|{48}|{49}|{50}|",
                 this.ContentTypesEnabled.GetHashCode(),
                 (this.Description != null ? this.Description.GetHashCode() : 0),
                 (this.DocumentTemplate != null ? this.DocumentTemplate.GetHashCode() : 0),
@@ -525,7 +534,9 @@ namespace PnP.Framework.Provisioning.Model
                 this.TemplateInternalName?.GetHashCode() ?? 0,
                 this.DefaultColumnValues.Aggregate(0, (acc, next) => acc += next.GetHashCode()),
                 this.EnableAudienceTargeting.GetHashCode(),
-                this.EnableClassicAudienceTargeting.GetHashCode()
+                this.EnableClassicAudienceTargeting.GetHashCode(),
+                this.DisableGridEditing.GetHashCode(),
+                this.ExcludeFromOfflineClient.GetHashCode()
             ).GetHashCode());
         }
 
@@ -609,7 +620,9 @@ namespace PnP.Framework.Provisioning.Model
                 this.TemplateInternalName == other.TemplateInternalName &&
                 this.DefaultColumnValues.DeepEquals(other.DefaultColumnValues) &&
                 this.EnableAudienceTargeting == other.EnableAudienceTargeting &&
-                this.EnableClassicAudienceTargeting == other.EnableClassicAudienceTargeting
+                this.EnableClassicAudienceTargeting == other.EnableClassicAudienceTargeting &&
+                this.DisableGridEditing == other.DisableGridEditing &&
+                this.ExcludeFromOfflineClient == other.ExcludeFromOfflineClient
             );
         }
 

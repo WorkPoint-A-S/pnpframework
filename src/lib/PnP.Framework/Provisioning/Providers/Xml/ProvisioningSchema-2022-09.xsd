@@ -3760,7 +3760,23 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+	  <xsd:attribute name="DisableGridEditing" type="xsd:boolean" use="optional">
+		  <xsd:annotation>
+			  <xsd:appinfo>workpoint #36809</xsd:appinfo>
+			  <xsd:documentation xml:lang="en">
+				  Specify whether Quick Edit and Details Pane can be used on this document library to bulk edit data.
+			  </xsd:documentation>
+		  </xsd:annotation>
+	  </xsd:attribute>
 
+	  <xsd:attribute name="ExcludeFromOfflineClient" type="xsd:boolean" use="optional">
+		  <xsd:annotation>
+			  <xsd:appinfo>workpoint #36809</xsd:appinfo>
+			  <xsd:documentation xml:lang="en">
+				  Specify whether this document library should be available for offline clients.
+			  </xsd:documentation>
+		  </xsd:annotation>
+	  </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="IRMSettings">

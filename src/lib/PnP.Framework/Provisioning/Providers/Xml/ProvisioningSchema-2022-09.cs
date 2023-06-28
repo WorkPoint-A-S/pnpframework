@@ -8396,6 +8396,8 @@ namespace PnP.Framework.Provisioning.Providers.Xml.V202209 {
         private bool enableFolderCreationField;
         
         private bool noCrawlField;
+        private bool disableGridEditingField;
+        private bool excludeFromOfflineClientField;
         
         private ListInstanceListExperience listExperienceField;
         
@@ -8447,6 +8449,8 @@ namespace PnP.Framework.Provisioning.Providers.Xml.V202209 {
             this.enableAttachmentsField = true;
             this.enableFolderCreationField = true;
             this.noCrawlField = false;
+            this.disableGridEditingField = false;
+            this.excludeFromOfflineClientField = false;
             this.listExperienceField = ListInstanceListExperience.Auto;
             this.directionField = ListInstanceDirection.NONE;
             this.readSecurityField = 1;
@@ -8867,7 +8871,37 @@ namespace PnP.Framework.Provisioning.Providers.Xml.V202209 {
                 this.noCrawlField = value;
             }
         }
-        
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        [System.ComponentModel.DefaultValueAttribute(false)]
+        public bool DisableGridEditing
+        {
+            get
+            {
+                return this.disableGridEditingField;
+            }
+            set
+            {
+                this.disableGridEditingField = value;
+            }
+        }
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        [System.ComponentModel.DefaultValueAttribute(false)]
+        public bool ExcludeFromOfflineClient
+        {
+            get
+            {
+                return this.excludeFromOfflineClientField;
+            }
+            set
+            {
+                this.excludeFromOfflineClientField = value;
+            }
+        }
+
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
         [System.ComponentModel.DefaultValueAttribute(ListInstanceListExperience.Auto)]
