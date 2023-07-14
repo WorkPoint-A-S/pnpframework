@@ -11,6 +11,7 @@ using PnP.Framework.Provisioning.ObjectHandlers.Utilities;
 using PnP.Framework.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -946,6 +947,14 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 if (fieldRef.DisplayName.ContainsResourceToken())
                 {
                     listField.TitleResource.SetUserResourceValue(fieldRef.DisplayName, parser);
+
+                    // Title for default web langauge must be set using the Title prop on listField
+                    var defaultCulture = new CultureInfo((int)siteList.ParentWeb.EnsureProperty(w => w.Language));
+
+                    var resourceValues = parser.GetResourceTokenResourceValues(fieldRef.DisplayName);                    
+                    var defaultResourceValue = resourceValues.FirstOrDefault(r => r.Item1 == defaultCulture.Name);
+                    if (defaultResourceValue != null)
+                        listField.Title = defaultResourceValue.Item2;
                 }
                 else
                 {
