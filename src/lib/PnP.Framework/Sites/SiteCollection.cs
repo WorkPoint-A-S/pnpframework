@@ -141,6 +141,10 @@ namespace PnP.Framework.Sites
             {
                 payload.Add("PreferredDataLocation", siteCollectionCreationInformation.PreferredDataLocation.Value.ToString());
             }
+            if (siteCollectionCreationInformation.TimeZoneId.HasValue)
+            {
+                payload.Add("TimeZoneId", siteCollectionCreationInformation.TimeZoneId.Value);
+            }
 
             return await CreateAsync(clientContext, siteCollectionCreationInformation.Owner, payload, delayAfterCreation, noWait: noWait);
         }
@@ -539,7 +543,7 @@ namespace PnP.Framework.Sites
 
             if (group != null && !string.IsNullOrEmpty(group.SiteUrl))
             {
-                if (siteCollectionCreationInformation.Owners!=null)
+                if (siteCollectionCreationInformation.Owners != null)
                 {
                     Graph.UnifiedGroupsUtility.AddUnifiedGroupMembers(group.GroupId, siteCollectionCreationInformation.Owners, graphAccessToken);
                 }
@@ -1315,7 +1319,7 @@ namespace PnP.Framework.Sites
                             }
                         }
                     }
-                    
+
                     return await Task.Run(() => responseString);
                 }
                 else
@@ -1328,7 +1332,7 @@ namespace PnP.Framework.Sites
 
                     return await Task.Run(() => responseString);
                 }
-                
+
             }
         }
 
