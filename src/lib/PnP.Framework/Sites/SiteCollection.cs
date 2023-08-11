@@ -194,6 +194,10 @@ namespace PnP.Framework.Sites
                 payload.Add("SensitivityLabel", sensitivityLabelId);
                 payload["Classification"] = siteCollectionCreationInformation.SensitivityLabel;
             }
+            if (siteCollectionCreationInformation.TimeZoneId.HasValue)
+            {
+                payload.Add("TimeZoneId", siteCollectionCreationInformation.TimeZoneId.Value);
+            }
             return await CreateAsync(
                 clientContext,
                 siteCollectionCreationInformation.Owner,
@@ -252,7 +256,6 @@ namespace PnP.Framework.Sites
                 // Use the regular REST API of SPO to create the modern Team Site
                 responseContext = await CreateTeamSiteViaSPOAsync(clientContext, siteCollectionCreationInformation, delayAfterCreation, maxRetryCount, noWait: noWait);
             }
-
             return responseContext;
         }
 
@@ -971,7 +974,6 @@ namespace PnP.Framework.Sites
             {
                 optionalParams.Add("Owners", siteCollectionGroupifyInformation.Owners);
             }
-
             payload.Add("optionalParams", optionalParams);
 
             var body = payload;
