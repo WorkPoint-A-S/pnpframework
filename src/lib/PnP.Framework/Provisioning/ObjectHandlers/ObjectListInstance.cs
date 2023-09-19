@@ -28,7 +28,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
     internal class ObjectListInstance : ObjectHandlerBase
     {
         private readonly FieldAndListProvisioningStepHelper.Step step;
-        
+
         public override string Name
         {
 #if DEBUG
@@ -951,7 +951,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     // Title for default web langauge must be set using the Title prop on listField
                     var defaultCulture = new CultureInfo((int)siteList.ParentWeb.EnsureProperty(w => w.Language));
 
-                    var resourceValues = parser.GetResourceTokenResourceValues(fieldRef.DisplayName);                    
+                    var resourceValues = parser.GetResourceTokenResourceValues(fieldRef.DisplayName);
                     var defaultResourceValue = resourceValues.FirstOrDefault(r => r.Item1 == defaultCulture.Name);
                     if (defaultResourceValue != null)
                         listField.Title = defaultResourceValue.Item2;
@@ -1488,7 +1488,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 {
                     isDirty |= existingList.Set(x => x.EnableVersioning, templateList.EnableVersioning);
                 }
-                
+
                 isDirty |= existingList.Set(x => x.NoCrawl, templateList.NoCrawl);
                 isDirty |= existingList.Set(x => x.DisableGridEditing, templateList.DisableGridEditing);
                 isDirty |= existingList.Set(x => x.ExcludeFromOfflineClient, templateList.DisableGridEditing);
@@ -1667,14 +1667,14 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             listContentType = list.ContentTypes.GetById(existingContentTypeId.StringValue);
                         }
                         else
-                        {                            
+                        {
                             // Add the content type
                             listContentType = list.ContentTypes.AddExistingContentType(tempCT);
                         }
                         web.Context.Load(listContentType, ct => ct.Id, ct => ct.Name);
                         web.Context.ExecuteQueryRetry();
                         parser.AddToken(new ListContentTypeIdToken(web, list.Title, listContentType));
-                        
+
                         if (ctb.Default && defaultContentType == null)
                         {
                             defaultContentType = listContentType;
@@ -2103,7 +2103,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             String targetFolderName = parser.ParseString(folder.Name);
             list.SiteList.ParentWeb.EnsureProperties(w => w.ServerRelativeUrl);
 
-            if (targetFolderName == "/" )
+            if (targetFolderName == "/")
             {
                 // Handle any child-folder
                 if (folder.Folders != null && folder.Folders.Count > 0)
@@ -2205,7 +2205,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         currentFolderItem.UpdateOverwriteVersion();
                         currentFolder.Update();
                         parentFolder.Context.ExecuteQueryRetry();
-                                 
+
                     }
                     catch (ServerException srex)
                     {
@@ -2254,7 +2254,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             throw;
                     }
                 }
-                
+
                 //Set Moderation status of Folder
                 //Doing it in a different request, because SharePoint doesn't allow to update properties at the same time that other properties
                 if (list.SiteList.EnableModeration && folder.Properties != null && folder.Properties.Any(p => p.Key.Equals("_ModerationStatus")))
@@ -2284,7 +2284,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         else
                             throw;
                     }
-                    
+
                 }
             }
         }
@@ -2574,7 +2574,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     list = ExtractInformationRightsManagement(web, siteList, list, creationInfo, template);
 
                     list = ExtractPropertyBagEntries(siteList, list);
-                                        
+
                     if (baseTemplateList != null)
                     {
                         // do we plan to extract items from this list?
@@ -2718,10 +2718,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 web.Context.ExecuteQueryRetry();
                 foreach (var fieldLink in ct.FieldLinks)
                 {
-                    if (!fieldLink.Hidden)
-                    {
-                        contentTypeFields.Add(new FieldRef() { Id = fieldLink.Id });
-                    }
+                    contentTypeFields.Add(new FieldRef() { Id = fieldLink.Id });
                 }
                 count++;
             }
@@ -2832,7 +2829,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         }
                     }
 
-                    if(field.InternalName == Constants.ModernAudienceTargetingInternalName || field.InternalName == Constants.ModernAudienceTargetingMultiLookupInternalName)
+                    if (field.InternalName == Constants.ModernAudienceTargetingInternalName || field.InternalName == Constants.ModernAudienceTargetingMultiLookupInternalName)
                     {
                         //Modern Audience Targeting
                         list.EnableAudienceTargeting = true;
@@ -2850,7 +2847,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         var fieldTitle = field.Title;
                         if (creationInfo.PersistMultiLanguageResources)
                         {
-                            var escapedFieldTitle = siteList.Title.Replace(" ", "_")+"_"+field.Title.Replace(" ", "_");
+                            var escapedFieldTitle = siteList.Title.Replace(" ", "_") + "_" + field.Title.Replace(" ", "_");
                             if (UserResourceExtensions.PersistResourceValue(field.TitleResource, $"Field_{escapedFieldTitle}_DisplayName", template, creationInfo, false))
                             {
                                 fieldTitle = $"{{res:Field_{escapedFieldTitle}_DisplayName}}";
