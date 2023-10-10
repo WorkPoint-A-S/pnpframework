@@ -8398,8 +8398,10 @@ namespace PnP.Framework.Provisioning.Providers.Xml.V202209 {
         private bool noCrawlField;
         private bool disableGridEditingField;
         private bool excludeFromOfflineClientField;
-        
-        private ListInstanceListExperience listExperienceField;
+		private bool disableCommenting;
+		private bool crawlNonDefaultViews;
+
+		private ListInstanceListExperience listExperienceField;
         
         private string defaultDisplayFormUrlField;
         
@@ -8451,6 +8453,8 @@ namespace PnP.Framework.Provisioning.Providers.Xml.V202209 {
             this.noCrawlField = false;
             this.disableGridEditingField = false;
             this.excludeFromOfflineClientField = false;
+			this.disableCommenting = false;
+			this.crawlNonDefaultViews = false;
             this.listExperienceField = ListInstanceListExperience.Auto;
             this.directionField = ListInstanceDirection.NONE;
             this.readSecurityField = 1;
@@ -8902,8 +8906,37 @@ namespace PnP.Framework.Provisioning.Providers.Xml.V202209 {
             }
         }
 
-        /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
+		/// <remarks/>
+		[System.Xml.Serialization.XmlAttributeAttribute()]
+		[System.ComponentModel.DefaultValueAttribute(false)]
+		public bool DisableCommenting
+		{
+			get
+			{
+				return this.disableCommenting;
+			}
+			set
+			{
+				this.disableCommenting = value;
+			}
+		}
+
+		[System.Xml.Serialization.XmlAttributeAttribute()]
+		[System.ComponentModel.DefaultValueAttribute(false)]
+		public bool CrawlNonDefaultViews
+		{
+			get
+			{
+				return this.crawlNonDefaultViews;
+			}
+			set
+			{
+				this.crawlNonDefaultViews = value;
+			}
+		}
+
+		/// <remarks/>
+		[System.Xml.Serialization.XmlAttributeAttribute()]
         [System.ComponentModel.DefaultValueAttribute(ListInstanceListExperience.Auto)]
         public ListInstanceListExperience ListExperience {
             get {

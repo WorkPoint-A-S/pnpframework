@@ -3777,6 +3777,25 @@
 			  </xsd:documentation>
 		  </xsd:annotation>
 	  </xsd:attribute>
+
+    <xsd:attribute name="DisableCommenting" type="xsd:boolean" use="optional">
+      <xsd:annotation>
+        <xsd:appinfo>workpoint #38608</xsd:appinfo>
+        <xsd:documentation xml:lang="en">
+          Specify whether commenting is disabled on the list.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+
+    <xsd:attribute name="CrawlNonDefaultViews" type="xsd:boolean" use="optional">
+      <xsd:annotation>
+        <xsd:appinfo>workpoint #38608</xsd:appinfo>
+        <xsd:documentation xml:lang="en">
+          Specify whether to crawl non default views.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    
   </xsd:complexType>
 
   <xsd:complexType name="IRMSettings">
