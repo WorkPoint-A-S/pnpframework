@@ -475,17 +475,27 @@ namespace PnP.Framework.Provisioning.Model
         /// </summary>
         public bool ExcludeFromOfflineClient { get; set; }
 
-        #endregion
+		/// <summary>
+		/// Specify whether commenting is disabled on the list.
+		/// </summary>
+		public bool DisableCommenting { get; set; }
 
-        #region Comparison code
+		/// <summary>
+		/// Specify whether to crawl non default views.
+		/// </summary>
+		public bool CrawlNonDefaultViews { get; set; }
+		
+		#endregion
 
-        /// <summary>
-        /// Gets the hash code
-        /// </summary>
-        /// <returns>Returns HashCode</returns>
-        public override int GetHashCode()
+		#region Comparison code
+
+		/// <summary>
+		/// Gets the hash code
+		/// </summary>
+		/// <returns>Returns HashCode</returns>
+		public override int GetHashCode()
         {
-            return (String.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}|{15}|{16}|{17}|{18}|{19}|{20}|{21}|{22}|{23}|{24}|{25}|{26}|{27}|{28}|{29}|{30}|{31}|{32}|{33}|{34}|{35}|{36}|{37}|{38}|{39}|{40}|{41}|{42}|{43}|{44}|{45}|{46}|{47}|{48}|{49}|{50}|",
+            return (String.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}|{13}|{14}|{15}|{16}|{17}|{18}|{19}|{20}|{21}|{22}|{23}|{24}|{25}|{26}|{27}|{28}|{29}|{30}|{31}|{32}|{33}|{34}|{35}|{36}|{37}|{38}|{39}|{40}|{41}|{42}|{43}|{44}|{45}|{46}|{47}|{48}|{49}|{50}|{51}|{52}|",
                 this.ContentTypesEnabled.GetHashCode(),
                 (this.Description != null ? this.Description.GetHashCode() : 0),
                 (this.DocumentTemplate != null ? this.DocumentTemplate.GetHashCode() : 0),
@@ -536,7 +546,9 @@ namespace PnP.Framework.Provisioning.Model
                 this.EnableAudienceTargeting.GetHashCode(),
                 this.EnableClassicAudienceTargeting.GetHashCode(),
                 this.DisableGridEditing.GetHashCode(),
-                this.ExcludeFromOfflineClient.GetHashCode()
+                this.ExcludeFromOfflineClient.GetHashCode(),
+				this.DisableCommenting.GetHashCode(),
+				this.CrawlNonDefaultViews.GetHashCode()
             ).GetHashCode());
         }
 
@@ -622,7 +634,9 @@ namespace PnP.Framework.Provisioning.Model
                 this.EnableAudienceTargeting == other.EnableAudienceTargeting &&
                 this.EnableClassicAudienceTargeting == other.EnableClassicAudienceTargeting &&
                 this.DisableGridEditing == other.DisableGridEditing &&
-                this.ExcludeFromOfflineClient == other.ExcludeFromOfflineClient
+                this.ExcludeFromOfflineClient == other.ExcludeFromOfflineClient &&
+				this.DisableCommenting == other.DisableCommenting &&
+				this.CrawlNonDefaultViews == other.CrawlNonDefaultViews
             );
         }
 

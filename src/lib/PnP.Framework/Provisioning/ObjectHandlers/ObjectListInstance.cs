@@ -1308,7 +1308,9 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 l => l.WriteSecurity,
                 l => l.AdditionalUXProperties,
                 l => l.DisableGridEditing,
-                l => l.ExcludeFromOfflineClient);
+                l => l.ExcludeFromOfflineClient,
+				l => l.DisableCommenting,
+				l => l.CrawlNonDefaultViews);
 
             web.Context.ExecuteQueryRetry();
 
@@ -1491,9 +1493,11 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
                 isDirty |= existingList.Set(x => x.NoCrawl, templateList.NoCrawl);
                 isDirty |= existingList.Set(x => x.DisableGridEditing, templateList.DisableGridEditing);
-                isDirty |= existingList.Set(x => x.ExcludeFromOfflineClient, templateList.DisableGridEditing);
+                isDirty |= existingList.Set(x => x.ExcludeFromOfflineClient, templateList.ExcludeFromOfflineClient);
+				isDirty |= existingList.Set(x => x.DisableCommenting, templateList.DisableCommenting);
+				isDirty |= existingList.Set(x => x.CrawlNonDefaultViews, templateList.CrawlNonDefaultViews);
 
-                if (isDirty)
+				if (isDirty)
                 {
                     existingList.Update();
                     web.Context.ExecuteQueryRetry();
@@ -1781,7 +1785,9 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                                               l => l.Description,
                                               l => l.NoCrawl,
                                               l => l.DisableGridEditing,
-                                              l => l.ExcludeFromOfflineClient);
+                                              l => l.ExcludeFromOfflineClient,
+											  l => l.DisableCommenting,
+											  l => l.CrawlNonDefaultViews);
                 web.Context.ExecuteQueryRetry();
                 var isDirty = false;
                 if (!string.Equals(createdList.Description, templateList.Description))
@@ -2003,6 +2009,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             createdList.NoCrawl = templateList.NoCrawl;
             createdList.DisableGridEditing = templateList.DisableGridEditing;
             createdList.ExcludeFromOfflineClient = templateList.ExcludeFromOfflineClient;
+			createdList.DisableCommenting = templateList.DisableCommenting;
+			createdList.CrawlNonDefaultViews = templateList.CrawlNonDefaultViews;
 
             createdList.Update();
 
@@ -2406,6 +2414,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         l => l.NoCrawl,
                         l => l.DisableGridEditing,
                         l => l.ExcludeFromOfflineClient,
+						l => l.DisableCommenting,
+						l => l.CrawlNonDefaultViews,
                         l => l.ListExperienceOptions,
                         l => l.ReadSecurity,
                         l => l.WriteSecurity,
@@ -2513,6 +2523,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         NoCrawl = siteList.NoCrawl,
                         DisableGridEditing = siteList.DisableGridEditing,
                         ExcludeFromOfflineClient = siteList.ExcludeFromOfflineClient,
+						DisableCommenting = siteList.DisableCommenting,
+						CrawlNonDefaultViews = siteList.CrawlNonDefaultViews,
                         ListExperience = (Model.ListExperience)Enum.Parse(typeof(Model.ListExperience), siteList.ListExperienceOptions.ToString()),
                         ReadSecurity = siteList.ReadSecurity,
                         WriteSecurity = siteList.WriteSecurity,
