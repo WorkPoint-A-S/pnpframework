@@ -75,15 +75,17 @@ namespace PnP.Framework.Sites
         /// <param name="delayAfterCreation">Defines the number of seconds to wait after creation</param>
         /// <param name="noWait">If specified the site will be created and the process will be finished asynchronously</param>
         /// <param name="graphAccessToken">An optional Access Token for Microsoft Graph to use for creeating the site within an App-Only context</param>
+        /// <param name="azureEnvironment">Defines the Azure Cloud Deployment. This is used to determine the MS Graph EndPoint to call which differs per Azure Cloud deployments. Defaults to Production (graph.microsoft.com).</param>
         /// <returns>ClientContext object for the created site collection</returns>
         public static ClientContext Create(
             ClientContext clientContext,
             TeamSiteCollectionCreationInformation siteCollectionCreationInformation,
             int delayAfterCreation = 0,
             bool noWait = false,
-            string graphAccessToken = null)
+            string graphAccessToken = null,
+            AzureEnvironment azureEnvironment = AzureEnvironment.Production)
         {
-            var context = CreateAsync(clientContext, siteCollectionCreationInformation, delayAfterCreation, noWait: noWait, graphAccessToken: graphAccessToken).GetAwaiter().GetResult();
+            var context = CreateAsync(clientContext, siteCollectionCreationInformation, delayAfterCreation, noWait: noWait, graphAccessToken: graphAccessToken, azureEnvironment: azureEnvironment).GetAwaiter().GetResult();
             return context;
         }
 
@@ -548,12 +550,13 @@ namespace PnP.Framework.Sites
             {
                 if (siteCollectionCreationInformation.Owners != null)
                 {
-                    Graph.UnifiedGroupsUtility.AddUnifiedGroupMembers(group.GroupId, siteCollectionCreationInformation.Owners, graphAccessToken);
+                    Graph.UnifiedGroupsUtility.AddUnifiedGroupMembers(group.GroupId, siteCollectionCreationInformation.Owners, graphAccessToken, azureEnvironment: azureEnvironment);
                 }
                 // Try to configure the site/group classification, if any
                 if (!string.IsNullOrEmpty(siteCollectionCreationInformation.Classification))
                 {
                     await SetTeamSiteClassification(
+                        clientContext,
                         siteCollectionCreationInformation.Classification,
                         group.GroupId,
                         graphAccessToken
@@ -566,11 +569,14 @@ namespace PnP.Framework.Sites
             return responseContext;
         }
 
-        private static async Task SetTeamSiteClassification(string classification, string groupId, string graphAccessToken)
+        private static async Task SetTeamSiteClassification(ClientContext clientContext, string classification, string groupId, string graphAccessToken)
         {
             // Patch the created group
             var httpClient = PnPHttpClient.Instance.GetHttpClient();
-            string requestUrl = $"https://graph.microsoft.com/v1.0/groups/{groupId}";
+
+            var microsoftGraphBaseUri = AuthenticationManager.GetGraphBaseEndPoint(clientContext.GetAzureEnvironment());
+
+            string requestUrl = $"{microsoftGraphBaseUri}v1.0/groups/{groupId}";
 
             // Serialize request object to JSON
             var jsonBody = JsonConvert.SerializeObject(new { classification });
@@ -890,6 +896,20 @@ namespace PnP.Framework.Sites
 
         private static Dictionary<string, object> GetRequestPayload(SiteCreationInformation siteCollectionCreationInformation)
         {
+            if (siteCollectionCreationInformation.Url.IndexOf("/sites/", StringComparison.InvariantCultureIgnoreCase) > -1 || siteCollectionCreationInformation.Url.IndexOf("/teams/", StringComparison.InvariantCultureIgnoreCase) > -1)
+            {
+                // Split the URL by '/'
+                string[] urlParts = siteCollectionCreationInformation.Url.Split('/');
+
+                // Get the last part of the URL after "sites"
+                string lastPart = urlParts[urlParts.Length - 1];
+
+                string newLastPart = UrlUtility.RemoveUnallowedCharacters(lastPart);
+                newLastPart = UrlUtility.ReplaceAccentedCharactersWithLatin(newLastPart);
+
+                siteCollectionCreationInformation.Url = siteCollectionCreationInformation.Url.Replace(lastPart, newLastPart);
+            }
+
             Dictionary<string, object> payload = new Dictionary<string, object>
             {
                 { "Title", siteCollectionCreationInformation.Title },
@@ -1069,6 +1089,9 @@ namespace PnP.Framework.Sites
             var httpClient = PnPHttpClient.Instance.GetHttpClient(context);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
+            // Escape single quotes, for instance, when the alias is something like "What's new", it should be escaped to "What''s new"
+            alias = alias.Replace("'", "''");
+            
             string requestUrl = string.Format("{0}/_api/SP.Directory.DirectorySession/Group(alias='{1}')", context.Web.Url, alias);
             using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUrl))
             {
@@ -1130,6 +1153,9 @@ namespace PnP.Framework.Sites
             var httpClient = PnPHttpClient.Instance.GetHttpClient(context);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
+            // Escape single quotes, for instance, when the alias is something like "What's new", it should be escaped to "What''s new"
+            alias = alias.Replace("'", "''");
+            
             string requestUrl = string.Format("{0}/_api/SP.Directory.DirectorySession/Group(alias='{1}')", context.Web.Url, alias);
             using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUrl))
             {
