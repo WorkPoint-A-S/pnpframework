@@ -1199,7 +1199,7 @@ namespace PnP.Framework.Enums
         public static readonly Guid AppPublisher = new Guid("{b1402c55-9750-4346-b6c3-120b2da47b73}");
         public static readonly Guid ReturnIfCustomScriptDisabled = new Guid("{274a482a-ac49-4db7-bbb5-8bfbdd27b45b}");
         public static readonly Guid TenantWideExtensionSequence = new Guid("{89aa6026-7b00-4d24-8b4a-7c7de7880373}");
-        public static readonly Guid AppShortDescription = new Guid("{cf57b756-a2b6-43bd-ace3-6fd4d8ad90f8");
+        public static readonly Guid AppShortDescription = new Guid("{cf57b756-a2b6-43bd-ace3-6fd4d8ad90f8}");
         public static readonly Guid ClientComponentSkipFeatureDeployment = new Guid("{cd58f851-9090-49ed-a54e-fe488f662d4a}");
         public static readonly Guid SolutionId = new Guid("{fd34ca2f-4e81-40fa-b16f-4c455235da19}");
         public static readonly Guid SolutionName = new Guid("{f3d82830-df08-4612-b895-61198f55c723}");
