@@ -777,10 +777,13 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
 
                         try
                         {
-                            var file = web.GetFileByServerRelativePath(ResourcePath.FromDecodedUrl(s));
-                            web.Context.Load(file, f => f.UniqueId);
-                            web.Context.ExecuteQueryRetry();
-                            fileGuids.Add(file.UniqueId);
+                            if (s.StartsWith(web.ServerRelativeUrl, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var file = web.GetFileByServerRelativePath(ResourcePath.FromDecodedUrl(s));
+                                web.Context.Load(file, f => f.UniqueId);
+                                web.Context.ExecuteQueryRetry();
+                                fileGuids.Add(file.UniqueId);
+                            }
                         }
                         catch (Microsoft.SharePoint.Client.ServerException ex)
                         {
