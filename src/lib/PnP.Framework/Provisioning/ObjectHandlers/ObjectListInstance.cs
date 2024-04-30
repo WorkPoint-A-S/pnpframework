@@ -1356,6 +1356,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     Folder folder = web.GetFolderByServerRelativeUrl(oldUrl);
                     folder.MoveTo(newUrl);
                     folder.Update();
+                    web.Context.ExecuteQueryRetry();
                 }
 
                 if (parser.ParseString(templateList.Title) != existingList.Title)
