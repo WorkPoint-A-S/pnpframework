@@ -150,8 +150,11 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     web.Context.Load(navigationSettings, ns => ns.CurrentNavigation, ns => ns.GlobalNavigation);
                     web.Context.ExecuteQueryRetry();
 
-                    navigationSettings.AddNewPagesToNavigation = template.Navigation.AddNewPagesToNavigation;
-                    navigationSettings.CreateFriendlyUrlsForNewPages = template.Navigation.CreateFriendlyUrlsForNewPages;
+                    if (!web.IsSubSite() || !isNoScriptSite)
+                    {
+                        navigationSettings.AddNewPagesToNavigation = template.Navigation.AddNewPagesToNavigation;
+                        navigationSettings.CreateFriendlyUrlsForNewPages = template.Navigation.CreateFriendlyUrlsForNewPages;
+                    }
 
                     // Configure the Navigation audience targeting
                     web.NavAudienceTargetingEnabled = template.Navigation.EnableAudienceTargeting;
