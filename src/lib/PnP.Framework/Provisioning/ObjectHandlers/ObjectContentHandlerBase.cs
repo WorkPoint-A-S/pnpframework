@@ -187,7 +187,14 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
                 if (fileConnector.Parameters.ContainsKey(FileConnectorBase.CONTAINER))
                 {
-                    container = string.Concat(fileConnector.GetContainer(), container);
+                    if (!fileConnector.GetContainer().EndsWith("/") && !(container.StartsWith("/") || container.StartsWith("\\")))
+                    {
+                        container = string.Concat(fileConnector.GetContainer() + "/", container);
+                    }
+                    else
+                    {
+                        container = string.Concat(fileConnector.GetContainer(), container);
+                    }
                 }
 
                 using (Stream s = connector.GetFileStream(fileName, folderPath))
