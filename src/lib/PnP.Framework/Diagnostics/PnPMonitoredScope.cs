@@ -181,11 +181,27 @@ namespace PnP.Framework.Diagnostics
         /// <param name="args">Arguments object</param>
         public void LogWarning(string message, params object[] args)
         {
+            var formattedMessage = "";
+            try
+            {
+                if (args.Length > 0)
+                {
+                    formattedMessage = string.Format(message, args);
+                }
+                else
+                {
+                    formattedMessage = message;
+                }
+            }
+            catch (FormatException ex)
+            {
+                formattedMessage = message;
+            }
             Log.Warning(new LogEntry()
             {
                 CorrelationId = TopScope.Value.CorrelationId,
                 EllapsedMilliseconds = _stopWatch.ElapsedMilliseconds,
-                Message = string.Format(message, args),
+                Message = formattedMessage,
                 Source = Name,
                 ThreadId = _threadId
             });
