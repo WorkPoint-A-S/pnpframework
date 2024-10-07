@@ -16,7 +16,7 @@ namespace PnP.Framework.ALM
         public Guid Id { get; set; }
         /// <summary>        
         /// </summary>
-        public Guid AadAppId { get; set; }
+        public Guid? AadAppId { get; set; }
         /// <summary>        
         /// </summary>
         public string AadPermissions { get; set; }
