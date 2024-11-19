@@ -106,6 +106,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             {
                 sspIdElement.Value = "{sitecollectiontermstoreid}";
             }
+
+            var anchorIdElement = element.XPathSelectElement("./Customization/ArrayOfProperty/Property[Name = 'AnchorId']/Value");
             var termSetIdElement = element.XPathSelectElement("./Customization/ArrayOfProperty/Property[Name = 'TermSetId']/Value");
             if (termSetIdElement != null)
             {
@@ -113,6 +115,16 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 if (Guid.TryParse(termSetIdElement.Value, out termSetId) && termSetId != Guid.Empty)
                 {
                     Microsoft.SharePoint.Client.Taxonomy.TermSet termSet = store.GetTermSet(termSetId);
+                    Microsoft.SharePoint.Client.Taxonomy.Term sourceAnchorTerm = null;
+                    if (!string.IsNullOrEmpty(anchorIdElement?.Value))
+                    {
+                        var anchorTermGuid = new Guid(anchorIdElement.Value);
+                        if (anchorTermGuid != Guid.Empty)
+                        {
+                            sourceAnchorTerm = store.GetTerm(anchorTermGuid);
+                            store.Context.Load(sourceAnchorTerm, ats => ats.Name, ats => ats.Id, ats => ats.PathOfTerm);
+                        }
+                    }
                     store.Context.ExecuteQueryRetry();
 
                     if (!termSet.ServerObjectIsNull())
@@ -120,6 +132,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         termSet.EnsureProperties(ts => ts.Name, ts => ts.Group.Name, ts => ts.Group.IsSiteCollectionGroup);
 
                         termSetIdElement.Value = String.Format("{{termsetid:{0}:{1}}}", termSet.Group.IsSiteCollectionGroup ? "{sitecollectiontermgroupname}" : termSet.Group.Name, termSet.Name);
+                    }
+                    if (sourceAnchorTerm != null && !sourceAnchorTerm.ServerObjectIsNull())
+                    {
+                        anchorIdElement.Value = String.Format("{{termid:{0}:{1}:{2}}}", termSet.Group.IsSiteCollectionGroup ? "{sitecollectiontermgroupname}" : termSet.Group.Name, termSet.Name, sourceAnchorTerm.PathOfTerm);
                     }
                 }
             }
@@ -233,7 +249,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     xml = Regex.Replace(xml, contentType.Id.StringValue, contentTypeReplacement, RegexOptions.IgnoreCase);
                 }
 
-                if(!string.IsNullOrWhiteSpace(NewDocumentTemplatesJson))
+                if (!string.IsNullOrWhiteSpace(NewDocumentTemplatesJson))
                 {
                     web.EnsureProperties(w => w.ServerRelativeUrl);
                     try

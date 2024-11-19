@@ -8,6 +8,7 @@ using Microsoft.Online.SharePoint.TenantAdministration;
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Taxonomy;
 using Newtonsoft.Json;
+using OfficeDevPnP.Core.Framework.Provisioning.ObjectHandlers.TokenDefinitions;
 using PnP.Framework.ALM;
 using PnP.Framework.Diagnostics;
 using PnP.Framework.Graph;
@@ -558,7 +559,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 && !tokenIds.Contains("termsetid")
                 && !tokenIds.Contains("sitecollectiontermgroupid")
                 && !tokenIds.Contains("sitecollectiontermgroupname")
-                && !tokenIds.Contains("sitecollectiontermsetid"))
+                && !tokenIds.Contains("sitecollectiontermsetid")
+                && !tokenIds.Contains("termid"))
             {
                 return;
             }
@@ -578,7 +580,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             web.Context.Load(termStore);
             web.Context.ExecuteQueryRetry();
 
-            if (tokenIds.Contains("termsetid"))
+            if (tokenIds.Contains("termsetid") || tokenIds.Contains("termid"))
             {
                 if (!termStore.ServerObjectIsNull.Value)
                 {
@@ -596,6 +598,16 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         foreach (var termSet in termGroup.TermSets)
                         {
                             _tokens.Add(new TermSetIdToken(web, termGroup.Name, termSet.Name, termSet.Id));
+                            if (tokenIds.Contains("termid"))
+                            {
+                                var allTerms = termSet.GetAllTerms();
+                                web.Context.Load(allTerms, ts => ts.Include(t => t.PathOfTerm, t => t.Id));
+                                web.Context.ExecuteQueryRetry();
+                                foreach (var term in allTerms)
+                                {
+                                    _tokens.Add(new TermIdToken(web, termGroup.Name, termSet.Name, term.PathOfTerm, term.Id));
+                                }
+                            }
                         }
                     }
                 }
@@ -607,7 +619,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             if (tokenIds.Contains("sitecollectiontermgroupname"))
                 _tokens.Add(new SiteCollectionTermGroupNameToken(web));
 
-            if (!tokenIds.Contains("sitecollectiontermsetid"))
+            if (!tokenIds.Contains("sitecollectiontermsetid") || !tokenIds.Contains("termid"))
             {
                 return;
             }
@@ -626,6 +638,16 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     foreach (var termSet in siteCollectionTermGroup.TermSets)
                     {
                         _tokens.Add(new SiteCollectionTermSetIdToken(web, termSet.Name, termSet.Id));
+                        if (tokenIds.Contains("termid"))
+                        {
+                            var allTerms = termSet.GetAllTerms();
+                            web.Context.Load(allTerms, ts => ts.Include(t => t.PathOfTerm, t => t.Id));
+                            web.Context.ExecuteQueryRetry();
+                            foreach (var term in allTerms)
+                            {
+                                _tokens.Add(new TermIdToken(web, siteCollectionTermGroup.Name, termSet.Name, term.PathOfTerm, term.Id));
+                            }
+                        }
                     }
                 }
             }
