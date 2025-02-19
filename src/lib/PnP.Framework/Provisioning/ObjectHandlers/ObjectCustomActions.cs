@@ -162,7 +162,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         {
             var isDirty = false;
 
-            if (isNoScriptSite)
+            //SL: #46194 to ensure that the custom action is added to the site if it is a noscript site and the client side component id is not empty
+            if (isNoScriptSite && Guid.Empty == customAction.ClientSideComponentId)
             {
                 scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_CustomActions_SkippingAddUpdateDueToNoScript, customAction.Name);
                 return;
