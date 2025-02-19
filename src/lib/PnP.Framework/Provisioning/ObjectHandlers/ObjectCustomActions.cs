@@ -65,9 +65,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             foreach (var customAction in customActions)
             {
 
-                //SL: #46194 to ensure that the custom action is not added to the site if it is a noscript site
-                //if (isNoScriptSite && Guid.Empty == customAction.ClientSideComponentId) 
-                if (Guid.Empty == customAction.ClientSideComponentId)
+                if (isNoScriptSite && Guid.Empty == customAction.ClientSideComponentId)
                 {
                     scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_CustomActions_SkippingAddUpdateDueToNoScript, customAction.Name);
                     continue;
@@ -164,13 +162,12 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         {
             var isDirty = false;
 
-            //SL: #46194 to ensure that the custom action is not added to the site if it is a noscript site
-
-            //if (isNoScriptSite)
-            //{
-            //    scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_CustomActions_SkippingAddUpdateDueToNoScript, customAction.Name);
-            //    return;
-            //}
+            //SL: #46194 to ensure that the custom action is added to the site if it is a noscript site and the client side component id is not empty
+            if (isNoScriptSite && Guid.Empty == customAction.ClientSideComponentId)
+            {
+                scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_CustomActions_SkippingAddUpdateDueToNoScript, customAction.Name);
+                return;
+            }
 
             // Otherwise we update it
             if (customAction.CommandUIExtension != null)

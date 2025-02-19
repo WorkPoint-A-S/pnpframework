@@ -1577,7 +1577,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         {
             bool isDirty = false;
 
-            //SL: #46194 to ensure that the custom action is not added to the site if it is a noscript site
+            //SL: #46194 to ensure that the custom action is added to the site if it is a noscript site and the client side component id is not empty
             //if (!isNoScriptSite)
             //{
             // Add any UserCustomActions
@@ -1587,6 +1587,13 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
             foreach (CustomAction userCustomAction in templateList.UserCustomActions)
             {
+                //SL: #46194 to ensure that the custom action is added to the site if it is a noscript site and the client side component id is not empty
+                if (isNoScriptSite && Guid.Empty == userCustomAction.ClientSideComponentId)
+                {
+                    scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ListInstances_SkipAddingOrUpdatingCustomActions);
+                    continue;
+                }
+
                 // Check for existing custom actions before adding (compare by custom action name)
                 if (!existingUserCustomActions.AsEnumerable().Any(uca => uca.Name == userCustomAction.Name))
                 {
@@ -2054,11 +2061,18 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             // Add any custom action
             if (templateList.UserCustomActions.Any())
             {
-                //SL: #46194 to ensure that the custom action is not added to the site if it is a noscript site
+                //SL: #46194 to ensure that the custom action is added to the site if it is a noscript site and the client side component id is not empty
                 //if (!isNoScriptSite)
                 //{
                 foreach (var userCustomAction in templateList.UserCustomActions)
                 {
+                    //SL: #46194 to ensure that the custom action is added to the site if it is a noscript site and the client side component id is not empty
+                    if (isNoScriptSite && Guid.Empty == userCustomAction.ClientSideComponentId)
+                    {
+                        scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ListInstances_SkipAddingOrUpdatingCustomActions);
+                        continue;
+                    }
+
                     CreateListCustomAction(createdList, parser, userCustomAction);
                 }
 
