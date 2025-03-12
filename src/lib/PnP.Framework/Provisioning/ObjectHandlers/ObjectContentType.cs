@@ -109,7 +109,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         }
 
                         // Set ReadOnly as the last thing because a ReadOnly content type cannot be updated
-                        if (this._step == FieldAndListProvisioningStepHelper.Step.LookupFields && existingCT.ReadOnly == false && ct.ReadOnly == true)
+                        if (this._step == FieldAndListProvisioningStepHelper.Step.LookupFields && existingCT.Sealed == false && existingCT.ReadOnly == false && ct.ReadOnly == true)
                         {
                             scope.LogPropertyUpdate(nameof(existingCT.ReadOnly));
                             existingCT.ReadOnly = ct.ReadOnly;
