@@ -43,7 +43,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 // Check if this is not a noscript site as we're not allowed to update some properties
                 bool isNoScriptSite = web.IsNoScriptSite();
 
-                web.Context.Load(web.ContentTypes, ct => ct.IncludeWithDefaultProperties(c => c.StringId, c => c.FieldLinks,
+                web.Context.Load(web.ContentTypes, ct => ct.IncludeWithDefaultProperties(c => c.StringId, c => c.FieldLinks, c => c.NewFormClientSideComponentId, c => c.DisplayFormClientSideComponentId, c => c.EditFormClientSideComponentId,
                                                                                          c => c.FieldLinks.Include(fl => fl.Id, fl => fl.Required, fl => fl.Hidden)));
                 web.Context.Load(web.Fields, fld => fld.IncludeWithDefaultProperties(f => f.Id, f => f.SchemaXml));
 
@@ -498,7 +498,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             var group = parser.ParseString(templateContentType.Group);
 
             var createdCT = web.CreateContentType(name, description, id, group);
-            createdCT.EnsureProperties(ct => ct.ReadOnly, ct => ct.Hidden, ct => ct.Sealed);
+            createdCT.EnsureProperties(ct => ct.ReadOnly, ct => ct.Hidden, ct => ct.Sealed, ct => ct.NewFormClientSideComponentId, ct => ct.DisplayFormClientSideComponentId, ct => ct.EditFormClientSideComponentId);
 
             List<FieldRef> fieldsRefsToProcess = new List<FieldRef>();
             foreach (FieldRef fr in templateContentType.FieldRefs)
@@ -787,9 +787,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         private static void SetContentTypeFormCustomizerSettings(ContentType templateContentType, TokenParser parser, Microsoft.SharePoint.Client.ContentType createdCT)
         {
             // Display Form Customizer
-            if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.DisplayFormClientSideComponentId)))
+            var displayFormClientSideComponentId = parser.ParseString(templateContentType.DisplayFormClientSideComponentId);
+            if (createdCT.DisplayFormClientSideComponentId != displayFormClientSideComponentId)
             {
-                createdCT.DisplayFormClientSideComponentId = parser.ParseString(templateContentType.DisplayFormClientSideComponentId);
+                createdCT.DisplayFormClientSideComponentId = displayFormClientSideComponentId ?? string.Empty;
             }
             if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.DisplayFormClientSideComponentProperties)))
             {
@@ -797,9 +798,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             }
 
             // New Form Customizer
-            if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.NewFormClientSideComponentId)))
+            var newFormClientSideComponentId = parser.ParseString(templateContentType.NewFormClientSideComponentId);
+            if (createdCT.NewFormClientSideComponentId != newFormClientSideComponentId)
             {
-                createdCT.NewFormClientSideComponentId = parser.ParseString(templateContentType.NewFormClientSideComponentId);
+                createdCT.NewFormClientSideComponentId = newFormClientSideComponentId ?? string.Empty;
             }
             if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.NewFormClientSideComponentProperties)))
             {
@@ -807,9 +809,10 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             }
 
             // Edit Form Customizer
-            if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.EditFormClientSideComponentId)))
+            var editFormClientSideComponentId = parser.ParseString(templateContentType.EditFormClientSideComponentId);
+            if (createdCT.EditFormClientSideComponentId != editFormClientSideComponentId)
             {
-                createdCT.EditFormClientSideComponentId = parser.ParseString(templateContentType.EditFormClientSideComponentId);
+                createdCT.EditFormClientSideComponentId = editFormClientSideComponentId ?? string.Empty;
             }
             if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.EditFormClientSideComponentProperties)))
             {
