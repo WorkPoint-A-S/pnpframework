@@ -837,11 +837,16 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
 
                 if (u.PathAndQuery != "/")
                 {
-                    if (folderPath.IndexOf(u.PathAndQuery, StringComparison.InvariantCultureIgnoreCase) > -1)
+                    string webPath = Uri.UnescapeDataString(u.PathAndQuery);
+                    string folderPathDecoded = Uri.UnescapeDataString(folderPath);
+
+                    if (folderPathDecoded.IndexOf(webPath, StringComparison.InvariantCultureIgnoreCase) > -1)
                     {
-                        folderPath = folderPath.Replace(u.PathAndQuery, "");
+                        folderPathDecoded = folderPathDecoded.Replace(webPath, "");
                     }
+                    folderPath = folderPathDecoded;
                 }
+
 
                 folderPath = Uri.UnescapeDataString(folderPath);
                 String container = Uri.UnescapeDataString(folderPath).Trim('/').Replace("/", "\\");
