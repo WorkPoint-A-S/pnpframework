@@ -32,20 +32,26 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
                     TaxonomySession taxSession = TaxonomySession.GetTaxonomySession(context);
                     TermStore termStore = null;
+                    List<Microsoft.SharePoint.Client.Taxonomy.TermGroup> termGroups;
 
                     try
                     {
                         termStore = taxSession.GetDefaultKeywordsTermStore();
-                        context.Load(termStore,
-                            ts => ts.Languages,
-                            ts => ts.DefaultLanguage,
-                            ts => ts.Groups.Include(
-                                tg => tg.Name,
-                                tg => tg.Id,
-                                tg => tg.TermSets.Include(
-                                    tset => tset.Name,
-                                    tset => tset.Id)));
+                        context.Load(termStore, ts => ts.Languages, ts => ts.DefaultLanguage);
+
+                        var groups = context.LoadQuery(termStore
+                            .Groups
+                            .Where(group => !group.IsSiteCollectionGroup)
+                            .Include(
+                                group => group.Name,
+                                group => group.Id,
+                                group => group.TermSets.Include(
+                                    termSet => termSet.Name,
+                                    termSet => termSet.Id)));
+
                         context.ExecuteQueryRetry();
+
+                        termGroups = groups.ToList();
                     }
                     catch (ServerException)
                     {
@@ -56,7 +62,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
                     foreach (var modelTermGroup in sequence.TermStore.TermGroups)
                     {
-                        this.reusedTerms.AddRange(TermGroupHelper.ProcessGroup(context, taxSession, termStore, modelTermGroup, null, parser, scope));
+                        this.reusedTerms.AddRange(TermGroupHelper.ProcessGroup(context, taxSession, termStore, termGroups, modelTermGroup, null, parser, scope));
                     }
 
                     foreach (var reusedTerm in this.reusedTerms)

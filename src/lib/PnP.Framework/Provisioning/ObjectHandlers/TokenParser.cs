@@ -579,21 +579,22 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             var termStore = session.GetDefaultSiteCollectionTermStore();
             web.Context.Load(termStore);
             web.Context.ExecuteQueryRetry();
-
-            if (tokenIds.Contains("termsetid") || tokenIds.Contains("termid"))
+             
+            if (tokenIds.Contains("termsetid"))
             {
                 if (!termStore.ServerObjectIsNull.Value)
                 {
-                    web.Context.Load(termStore.Groups,
-                        g => g.Include(
+                    var termGroups = web.Context.LoadQuery(termStore.Groups
+                        .Where(g => !g.IsSiteCollectionGroup)
+                        .Include(
                             tg => tg.Name,
                             tg => tg.TermSets.Include(
                                 ts => ts.Name,
-                                ts => ts.Id)
-                        ));
+                                ts => ts.Id)));
+
                     web.Context.ExecuteQueryRetry();
 
-                    foreach (var termGroup in termStore.Groups)
+                    foreach (var termGroup in termGroups)
                     {
                         foreach (var termSet in termGroup.TermSets)
                         {
@@ -619,7 +620,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             if (tokenIds.Contains("sitecollectiontermgroupname"))
                 _tokens.Add(new SiteCollectionTermGroupNameToken(web));
 
-            if (!tokenIds.Contains("sitecollectiontermsetid") || !tokenIds.Contains("termid"))
+            if (!tokenIds.Contains("sitecollectiontermsetid") && !tokenIds.Contains("sitecollectiontermgroupname"))
             {
                 return;
             }
@@ -638,6 +639,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     foreach (var termSet in siteCollectionTermGroup.TermSets)
                     {
                         _tokens.Add(new SiteCollectionTermSetIdToken(web, termSet.Name, termSet.Id));
+                        _tokens.Add(new TermSetIdToken(web, siteCollectionTermGroup.Name, termSet.Name, termSet.Id));
+
                         if (tokenIds.Contains("termid"))
                         {
                             var allTerms = termSet.GetAllTerms();

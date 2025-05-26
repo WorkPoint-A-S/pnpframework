@@ -10,7 +10,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
 {
     internal static class TermGroupHelper
     {
-        internal static List<ReusedTerm> ProcessGroup(ClientContext context, TaxonomySession session, TermStore termStore, Model.TermGroup modelTermGroup, TermGroup siteCollectionTermGroup, TokenParser parser, PnPMonitoredScope scope)
+        internal static List<ReusedTerm> ProcessGroup(ClientContext context, TaxonomySession session, TermStore termStore, List<TermGroup> termGroups, Model.TermGroup modelTermGroup, TermGroup siteCollectionTermGroup, TokenParser parser, PnPMonitoredScope scope)
         {
             List<ReusedTerm> reusedTerms = new List<ReusedTerm>();
 
@@ -26,7 +26,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
             var normalizedGroupName = TaxonomyItem.NormalizeName(context, modelGroupName);
             context.ExecuteQueryRetry();
 
-            TermGroup group = termStore.Groups.FirstOrDefault(
+            TermGroup group = termGroups.FirstOrDefault(
                 g => g.Id == modelTermGroup.Id || g.Name == normalizedGroupName.Value);
             if (group == null)
             {
@@ -42,10 +42,12 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                         tset => tset.Name,
                         tset => tset.Id));
                     context.ExecuteQueryRetry();
+
+                    termGroups.Add(group);
                 }
                 else
                 {
-                    group = termStore.Groups.FirstOrDefault(g => g.Name == normalizedGroupName.Value);
+                    group = termGroups.FirstOrDefault(g => g.Name == normalizedGroupName.Value);
 
                     if (group == null)
                     {
@@ -81,7 +83,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                         context.ExecuteQueryRetry();
 
                         newGroup = true;
-
+                        termGroups.Add(group);
                     }
                 }
 

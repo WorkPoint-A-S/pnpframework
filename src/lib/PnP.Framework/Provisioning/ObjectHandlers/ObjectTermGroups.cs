@@ -26,22 +26,35 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 TaxonomySession taxSession = TaxonomySession.GetTaxonomySession(web.Context);
                 TermStore termStore = null;
                 TermGroup siteCollectionTermGroup = null;
+                List<TermGroup> loadedTermGroups;
 
                 try
                 {
                     termStore = taxSession.GetDefaultKeywordsTermStore();
-                    web.Context.Load(termStore,
-                        ts => ts.Languages,
-                        ts => ts.DefaultLanguage,
-                        ts => ts.Groups.Include(
-                            tg => tg.Name,
-                            tg => tg.Id,
-                            tg => tg.TermSets.Include(
-                                tset => tset.Name,
-                                tset => tset.Id)));
-                    siteCollectionTermGroup = termStore.GetSiteCollectionGroup((web.Context as ClientContext).Site, false);
-                    web.Context.Load(siteCollectionTermGroup);
+                    web.Context.Load(termStore, ts => ts.Languages, ts => ts.DefaultLanguage);
+
+                    siteCollectionTermGroup = termStore.GetSiteCollectionGroup(((ClientContext)web.Context).Site, createIfMissing: false);
+                    web.Context.Load(siteCollectionTermGroup,
+                                group => group.Name,
+                                group => group.Id,
+                                group => group.TermSets.Include(
+                                    termSet => termSet.Name,
+                                    termSet => termSet.Id));
+
+                    IEnumerable<TermGroup> groups = web.Context.LoadQuery(termStore.Groups
+                                .Where(group => !group.IsSiteCollectionGroup)
+                                .Include(
+                                    group => group.Name,
+                                    group => group.Id,
+                                    group => group.TermSets.Include(
+                                        termSet => termSet.Name,
+                                        termSet => termSet.Id)));
                     web.Context.ExecuteQueryRetry();
+
+                    // Convert the loaded term groups to a list and add the site collection one.
+                    loadedTermGroups = groups.ToList();
+                    loadedTermGroups.Add(siteCollectionTermGroup);
+                    
                 }
                 catch (ServerException)
                 {
@@ -57,7 +70,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
                 foreach (var modelTermGroup in template.TermGroups)
                 {
-                    this.reusedTerms.AddRange(TermGroupHelper.ProcessGroup(web.Context as ClientContext, taxSession, termStore, modelTermGroup, siteCollectionTermGroup, parser, scope));
+                    this.reusedTerms.AddRange(TermGroupHelper.ProcessGroup(web.Context as ClientContext, taxSession, termStore, loadedTermGroups, modelTermGroup, siteCollectionTermGroup, parser, scope));
                 }
 
                 foreach (var reusedTerm in this.reusedTerms)
