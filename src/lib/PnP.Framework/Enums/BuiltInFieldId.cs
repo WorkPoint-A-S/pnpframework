@@ -1218,6 +1218,8 @@ namespace PnP.Framework.Enums
         public static readonly Guid TenantWideExtensionWebTemplate = new Guid("{8b97c8ba-e0c8-4c35-9b65-efee64f1b610}");
         public static readonly Guid WebApiPermissionRequests = new Guid("{f8a04db8-4b6e-4613-9232-02811628a7f6}");
         public static readonly Guid DocumentID = new Guid("{ae3e2a36-125d-45d3-9051-744b513536a6}");
+        public static readonly Guid DocumentIDUrl = new Guid("{3b63724f-3418-461f-868b-7706f69b029c}");
+        public static readonly Guid DocumentIDPersistId = new Guid("{c010d384-479c-494f-968c-c413dbe3de29}");
         private static Dictionary<Guid, bool> s_dict = null;
 
         /// <summary>
@@ -1757,7 +1759,9 @@ namespace PnP.Framework.Enums
                     [WebApiPermissionScopesNote] = true,
                     [TenantWideExtensionWebTemplate] = true,
                     [WebApiPermissionRequests] = true,
-                    [DocumentID] = true
+                    [DocumentID] = true,
+                    [DocumentIDUrl] = true,
+                    [DocumentIDPersistId] = true
                 };
             }
             bool flag = false;
