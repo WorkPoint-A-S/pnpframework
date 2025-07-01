@@ -1334,7 +1334,7 @@ namespace PnP.Framework
                 DisableReturnValueCache = true
             };
 
-            clientContext.AddWebRequestExecutorFactory();
+            //clientContext.AddWebRequestExecutorFactory();
 
             clientContext.ExecutingWebRequest += (sender, args) =>
             {
@@ -1599,7 +1599,7 @@ namespace PnP.Framework
                 DisableReturnValueCache = true
             };
 
-            clientContext.AddWebRequestExecutorFactory();
+            //clientContext.AddWebRequestExecutorFactory();
 
             clientContext.ExecutingWebRequest += (sender, args) =>
             {
@@ -1626,7 +1626,7 @@ namespace PnP.Framework
                 DisableReturnValueCache = true
             };
 
-            clientContext.AddWebRequestExecutorFactory();
+            //clientContext.AddWebRequestExecutorFactory();
 
             clientContext.ExecutingWebRequest += (sender, args) =>
             {
