@@ -1458,7 +1458,7 @@ namespace Microsoft.SharePoint.Client
                 }
                 foreach (var assignment in obj.RoleAssignments)
                 {
-                    var bindings = web.Context.LoadQuery(assignment.RoleDefinitionBindings.Where(b => b.Name != "Limited Access"));
+                    var bindings = web.Context.LoadQuery(assignment.RoleDefinitionBindings.Where(b => b.Name != "Limited Access" && b.Name != "Web-Only Limited Access"));
                     web.Context.Load(assignment.Member, m => m.LoginName, m => m.Title, m => m.PrincipalType, m => m.Id);
                     web.Context.ExecuteQueryRetry();
                     var bindingList = (from b in bindings select b.Name).ToList();
@@ -1546,7 +1546,7 @@ namespace Microsoft.SharePoint.Client
 
                 if (assignment != null)
                 {
-                    var bindings = web.Context.LoadQuery(assignment.RoleDefinitionBindings.Where(b => b.Name != "Limited Access"));
+                    var bindings = web.Context.LoadQuery(assignment.RoleDefinitionBindings.Where(b => b.Name != "Limited Access" && b.Name != "Web-Only Limited Access"));
                     web.Context.Load(assignment.Member, m => m.LoginName, m => m.Title, m => m.PrincipalType, m => m.Id);
                     web.Context.ExecuteQueryRetry();
 

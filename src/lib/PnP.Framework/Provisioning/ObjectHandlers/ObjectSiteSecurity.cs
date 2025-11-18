@@ -983,26 +983,32 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         {
                             foreach (var roleDefinition in webRoleAssignment.RoleDefinitionBindings)
                             {
-                                if (roleDefinition.RoleTypeKind != RoleType.Guest)
+                                var isGuest = roleDefinition.RoleTypeKind == RoleType.Guest;
+                                var isRestrictedGuest = roleDefinition.RoleTypeKind == RoleType.RestrictedGuest;
+                                var isWebOnlyLimitedAccess = string.Equals(roleDefinition.Name, "Web-Only Limited Access", StringComparison.OrdinalIgnoreCase);
+                                
+                                if (isGuest ||isRestrictedGuest || isWebOnlyLimitedAccess)
                                 {
-                                    var modelRoleAssignment = new Model.RoleAssignment();
-                                    var roleDefinitionValue = roleDefinition.Name;
-                                    if (roleDefinition.RoleTypeKind != RoleType.None)
-                                    {
-                                        // Replace with token
-                                        roleDefinitionValue = $"{{roledefinition:{roleDefinition.RoleTypeKind}}}";
-                                    }
-                                    modelRoleAssignment.RoleDefinition = roleDefinitionValue;
-                                    if (webRoleAssignment.Member.PrincipalType == PrincipalType.SharePointGroup)
-                                    {
-                                        modelRoleAssignment.Principal = ReplaceGroupTokens(web, webRoleAssignment.Member.LoginName);
-                                    }
-                                    else
-                                    {
-                                        modelRoleAssignment.Principal = webRoleAssignment.Member.LoginName;
-                                    }
-                                    siteSecurity.SiteSecurityPermissions.RoleAssignments.Add(modelRoleAssignment);
+                                    continue;
                                 }
+
+                                var modelRoleAssignment = new Model.RoleAssignment();
+                                var roleDefinitionValue = roleDefinition.Name;
+                                if (roleDefinition.RoleTypeKind != RoleType.None)
+                                {
+                                    // Replace with token
+                                    roleDefinitionValue = $"{{roledefinition:{roleDefinition.RoleTypeKind}}}";
+                                }
+                                modelRoleAssignment.RoleDefinition = roleDefinitionValue;
+                                if (webRoleAssignment.Member.PrincipalType == PrincipalType.SharePointGroup)
+                                {
+                                    modelRoleAssignment.Principal = ReplaceGroupTokens(web, webRoleAssignment.Member.LoginName);
+                                }
+                                else
+                                {
+                                    modelRoleAssignment.Principal = webRoleAssignment.Member.LoginName;
+                                }
+                                siteSecurity.SiteSecurityPermissions.RoleAssignments.Add(modelRoleAssignment);
                             }
                         }
                     }
