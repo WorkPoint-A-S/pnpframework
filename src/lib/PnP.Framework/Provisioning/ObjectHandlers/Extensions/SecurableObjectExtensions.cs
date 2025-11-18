@@ -180,14 +180,20 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Extensions
                         {
                             foreach (var roleDefinition in roleAssignment.RoleDefinitionBindings)
                             {
-                                if (roleDefinition.RoleTypeKind != RoleType.Guest)
+                                var isGuest = roleDefinition.RoleTypeKind == RoleType.Guest;
+                                var isRestrictedGuest = roleDefinition.RoleTypeKind == RoleType.RestrictedGuest;
+                                var isWebOnlyLimitedAccess = string.Equals(roleDefinition.Name, "Web-Only Limited Access", StringComparison.OrdinalIgnoreCase);
+
+                                if (isGuest || isRestrictedGuest || isWebOnlyLimitedAccess)
                                 {
-                                    security.RoleAssignments.Add(new Model.RoleAssignment()
-                                    {
-                                        Principal = ReplaceGroupTokens(context.Web, roleAssignment.Member.LoginName),
-                                        RoleDefinition = roleDefinition.Name
-                                    });
+                                    continue;
                                 }
+
+                                security.RoleAssignments.Add(new Model.RoleAssignment()
+                                {
+                                    Principal = ReplaceGroupTokens(context.Web, roleAssignment.Member.LoginName),
+                                    RoleDefinition = roleDefinition.Name
+                                });
                             }
                         }
                     }
