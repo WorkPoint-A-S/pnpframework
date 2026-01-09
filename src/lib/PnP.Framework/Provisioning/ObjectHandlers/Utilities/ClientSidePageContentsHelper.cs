@@ -294,6 +294,17 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                                             { "Text", TokenizeJsonTextData(web, (control as PnPCore.IPageText).Text) }
                                         };
                                 }
+                                //This will cause a issue with pages that they are locked for editing
+                                //else if (control is PnPCore.IEmptySection)
+                                //{
+                                //    (control as PnPCore.IEmptySection).BuildControlData(0);
+                                //    controlInstance.JsonControlData = (control as PnPCore.IEmptySection).JsonControlData;
+                                //    controlInstance.Type = WebPartType.Custom;
+                                //}
+                                else if (control is PnPCore.IEmptySection)
+                                {
+                                    continue; // do not add a CanvasControl
+                                }
                                 else
                                 {
                                     // set ControlId to webpart id
