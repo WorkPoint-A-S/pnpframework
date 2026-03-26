@@ -1,4 +1,5 @@
-﻿using PnP.Framework.Extensions;
+﻿using Newtonsoft.Json.Linq;
+using PnP.Framework.Extensions;
 using PnP.Framework.Provisioning.Model;
 using PnP.Framework.Provisioning.Providers.Xml.Resolvers;
 using System;
@@ -78,7 +79,18 @@ namespace PnP.Framework.Provisioning.Providers.Xml.Serializers.V201909
                     {
                         foreach (var section in page.Sections.Where(s => s.Type == CanvasSectionType.OneColumn || s.Type == CanvasSectionType.OneColumnVerticalSection))
                         {
-                            if (section.Controls != null && section.Controls.Any(c => !string.IsNullOrWhiteSpace(c.JsonControlData) && c.JsonControlData.Contains("\"sectionFactor\":100")))
+                            var hasFlexibleSectionPosition = false;
+                            foreach (var c in section.Controls.Where(c => !string.IsNullOrWhiteSpace(c.JsonControlData)))
+                            {
+                                var jObj = JObject.Parse(c.JsonControlData);
+                                if (jObj["position"]?["sectionFactor"]?.Value<int?>() == 100)
+                                {
+                                    hasFlexibleSectionPosition = true;
+                                    break;
+                                }
+                            }
+
+                            if (section.Controls != null && (section.Controls.Any(c => !string.IsNullOrWhiteSpace(c.JsonControlData) && c.JsonControlData.Contains("\"sectionFactor\":100")) || hasFlexibleSectionPosition))
                             {
                                 section.Type = section.Type == CanvasSectionType.OneColumn ? CanvasSectionType.FlexibleLayoutSection : CanvasSectionType.FlexibleLayoutVerticalSection;
                             }

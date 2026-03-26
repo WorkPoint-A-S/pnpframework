@@ -426,7 +426,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                                     {
                                         if ((control as PnPCore.IPageWebPart).ControlType != 14)
                                         {
-                                            scope.LogWarning("Has no valid Guid", (control as PnPCore.IPageWebPart).ControlType);
+                                            scope.LogWarning("Control with ControlType {0} on page has no valid WebPartId Guid", (control as PnPCore.IPageWebPart).ControlType);
                                         }
                                     }
 
@@ -594,19 +594,19 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                 // If the JsonControlData is already set, we don't need to merge it with the propertiesJson
                 var json = Newtonsoft.Json.Linq.JObject.Parse(webPart.JsonControlData);
                 if (!string.IsNullOrWhiteSpace(webPart.PropertiesJson))
-                    json.Add("properties", Newtonsoft.Json.Linq.JObject.Parse(webPart.PropertiesJson));
+                    json["properties"] = Newtonsoft.Json.Linq.JObject.Parse(webPart.PropertiesJson);
 
                 if (!webPart.ServerProcessedContent.Equals(default))
-                    json.Add("serverProcessedContent", Newtonsoft.Json.Linq.JObject.Parse(webPart.ServerProcessedContent.ToString()));
+                    json["serverProcessedContent"] = Newtonsoft.Json.Linq.JObject.Parse(webPart.ServerProcessedContent.ToString());
 
                 if (!webPart.DynamicDataPaths.Equals(default))
-                    json.Add("dynamicDataPaths", Newtonsoft.Json.Linq.JObject.Parse(webPart.DynamicDataPaths.ToString()));
+                    json["dynamicDataPaths"] =  Newtonsoft.Json.Linq.JObject.Parse(webPart.DynamicDataPaths.ToString());
 
                 if (!webPart.DynamicDataValues.Equals(default))
-                    json.Add("dynamicDataValues", Newtonsoft.Json.Linq.JObject.Parse(webPart.DynamicDataValues.ToString()));
+                    json["dynamicDataValues"] = Newtonsoft.Json.Linq.JObject.Parse(webPart.DynamicDataValues.ToString());
 
                 if (!webPart.DataVersion.Equals(default))
-                    json.Add("dataVersion", webPart.DataVersion.ToString());
+                    json["dataVersion"] = webPart.DataVersion.ToString();
 
                 return json.ToString(Formatting.None);
             }

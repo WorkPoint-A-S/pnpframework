@@ -770,7 +770,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                                         {
                                             if (Guid.TryParse(json["id"].Value<string>(), out Guid webPartId))
                                             {
-                                                PropertyInfo propertyInfo = myWebPart.Type.GetProperty("WebPartId");
+                                                PropertyInfo propertyInfo = myWebPart.GetType().GetProperty("WebPartId");
                                                 if (propertyInfo != null)
                                                 {
                                                     propertyInfo.SetValue(myWebPart, json["id"].Value<string>());
@@ -1061,13 +1061,14 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         {
             if (json["zoneReflowStrategy"] != null && json["zoneReflowStrategy"].Type != JTokenType.Null)
             {
-                if (int.TryParse(json["zoneReflowStrategy"]["axis"]?.Value<string>(), out var axis))
+                var axis = json["zoneReflowStrategy"]?["axis"]?.Value<int?>();
+                if (axis.HasValue)
                 {
-                    if (axis == 0)
+                    if (axis.Value == 0)
                     {
                         canvasColumn.ZoneReflowStrategy = PnPCore.ZoneReflowStrategy.TopToDown;
                     }
-                    else if (axis == 1)
+                    else if (axis.Value == 1)
                     {
                         canvasColumn.ZoneReflowStrategy = PnPCore.ZoneReflowStrategy.LeftToRight;
                     }
@@ -1091,11 +1092,11 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             {
                 return new PnPCore.ControlFlexLayoutPosition
                 {
-                    XPos = json["flexibleLayoutPosition"]["lg"]["x"]?.Value<int>() ?? 0,
-                    YPos = json["flexibleLayoutPosition"]["lg"]["y"]?.Value<int>() ?? 0,
-                    Width = json["flexibleLayoutPosition"]["lg"]["w"]?.Value<int>() ?? 0,
-                    Height = json["flexibleLayoutPosition"]["lg"]["h"]?.Value<int>() ?? 0,
-                    WpGroupId = Guid.TryParse(json["flexibleLayoutPosition"]["groupId"]?.Value<string>(), out Guid wpgroupId) ? wpgroupId : null
+                    XPos = json["flexibleLayoutPosition"]?["lg"]?["x"]?.Value<int>() ?? 0,
+                    YPos = json["flexibleLayoutPosition"]?["lg"]?["y"]?.Value<int>() ?? 0,
+                    Width = json["flexibleLayoutPosition"]?["lg"]?["w"]?.Value<int>() ?? 0,
+                    Height = json["flexibleLayoutPosition"]?["lg"]?["h"]?.Value<int>() ?? 0,
+                    WpGroupId = Guid.TryParse(json["flexibleLayoutPosition"]?["groupId"]?.Value<string>(), out Guid wpgroupId) ? wpgroupId : null
                 };
             }
             return null;
