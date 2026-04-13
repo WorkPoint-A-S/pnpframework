@@ -19,7 +19,7 @@ namespace PnP.Framework {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class CoreResources {
@@ -1155,6 +1155,15 @@ namespace PnP.Framework {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Creating page {0} failed: {1}.
+        /// </summary>
+        internal static string Provisioning_ObjectHandlers_ClientSidePages_Creating_page____0___failed___1_ {
+            get {
+                return ResourceManager.GetString("Provisioning_ObjectHandlers_ClientSidePages_Creating_page____0___failed___1_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Page with name {0} did already exist and the overwrite flag was not set, so nothing happened.
         /// </summary>
         internal static string Provisioning_ObjectHandlers_ClientSidePages_NoOverWrite {
@@ -1260,6 +1269,16 @@ namespace PnP.Framework {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Creating new Content Type: {0} failed: {1} .
+        /// </summary>
+        internal static string Provisioning_ObjectHandlers_ContentTypes_Creating_new_Content_Type___0___failed___1_ {
+            get {
+                return ResourceManager.GetString("Provisioning_ObjectHandlers_ContentTypes_Creating_new_Content_Type___0___failed__" +
+                        "_1_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to add &apos;{1}&apos; as DocumentTemplate to ContentType &apos;{0}&apos;.
         /// </summary>
         internal static string Provisioning_ObjectHandlers_ContentTypes_ErrorDocumentTemplate {
@@ -1348,6 +1367,16 @@ namespace PnP.Framework {
             get {
                 return ResourceManager.GetString("Provisioning_ObjectHandlers_ContentTypes_Updating_existing_Content_Type___0_____1" +
                         "_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Updating existing Content Type: {0} failed: {1} .
+        /// </summary>
+        internal static string Provisioning_ObjectHandlers_ContentTypes_Updating_existing_Content_Type___0___failed___1_ {
+            get {
+                return ResourceManager.GetString("Provisioning_ObjectHandlers_ContentTypes_Updating_existing_Content_Type___0___fai" +
+                        "led___1_", resourceCulture);
             }
         }
         
@@ -1642,11 +1671,12 @@ namespace PnP.Framework {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Creating field {0} failed: {1} : {2}.
+        ///   Looks up a localized string similar to Creating field {0} ({1}) failed: {2} : {3}.
         /// </summary>
-        internal static string Provisioning_ObjectHandlers_ListInstances_Creating_field__0__failed___1_____2_ {
+        internal static string Provisioning_ObjectHandlers_ListInstances_Creating_field__0___1___failed___2_____3_ {
             get {
-                return ResourceManager.GetString("Provisioning_ObjectHandlers_ListInstances_Creating_field__0__failed___1_____2_", resourceCulture);
+                return ResourceManager.GetString("Provisioning_ObjectHandlers_ListInstances_Creating_field__0___1___failed___2_____" +
+                        "3_", resourceCulture);
             }
         }
         
@@ -1678,11 +1708,11 @@ namespace PnP.Framework {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Creating view failed: {0} : {1}.
+        ///   Looks up a localized string similar to Creating view {0} failed: {1} : {2}.
         /// </summary>
-        internal static string Provisioning_ObjectHandlers_ListInstances_Creating_view_failed___0_____1_ {
+        internal static string Provisioning_ObjectHandlers_ListInstances_Creating_view__0___failed___1_____2_ {
             get {
-                return ResourceManager.GetString("Provisioning_ObjectHandlers_ListInstances_Creating_view_failed___0_____1_", resourceCulture);
+                return ResourceManager.GetString("Provisioning_ObjectHandlers_ListInstances_Creating_view__0___failed___1_____2_", resourceCulture);
             }
         }
         
@@ -1808,11 +1838,12 @@ namespace PnP.Framework {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Updating field {0} failed: {1} : {2}.
+        ///   Looks up a localized string similar to Updating field {0} ({1}) failed: {2} : {3}.
         /// </summary>
-        internal static string Provisioning_ObjectHandlers_ListInstances_Updating_field__0__failed___1_____2_ {
+        internal static string Provisioning_ObjectHandlers_ListInstances_Updating_field__0___1___failed___2_____3_ {
             get {
-                return ResourceManager.GetString("Provisioning_ObjectHandlers_ListInstances_Updating_field__0__failed___1_____2_", resourceCulture);
+                return ResourceManager.GetString("Provisioning_ObjectHandlers_ListInstances_Updating_field__0___1___failed___2_____" +
+                        "3_", resourceCulture);
             }
         }
         
@@ -2307,6 +2338,36 @@ namespace PnP.Framework {
         internal static string Provisioning_ObjectHandlers_Teams_TeamTemplate_ProvisioningError {
             get {
                 return ResourceManager.GetString("Provisioning_ObjectHandlers_Teams_TeamTemplate_ProvisioningError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creating term {0} ({1}) (parent: {2}) failed: {3}.
+        /// </summary>
+        internal static string Provisioning_ObjectHandlers_TermGroups_Creating_term___0_____1_____2_____failed_____3_ {
+            get {
+                return ResourceManager.GetString("Provisioning_ObjectHandlers_TermGroups_Creating_term___0_____1_____2_____failed__" +
+                        "___3_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creating term group {0} ({1}) failed: {2}.
+        /// </summary>
+        internal static string Provisioning_ObjectHandlers_TermGroups_Creating_termgroup___0_____1_____failed_____2_ {
+            get {
+                return ResourceManager.GetString("Provisioning_ObjectHandlers_TermGroups_Creating_termgroup___0_____1_____failed___" +
+                        "__2_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creating term set {0} ({1}) failed: {2}.
+        /// </summary>
+        internal static string Provisioning_ObjectHandlers_TermGroups_Creating_termset___0_____1_____failed_____2_ {
+            get {
+                return ResourceManager.GetString("Provisioning_ObjectHandlers_TermGroups_Creating_termset___0_____1_____failed_____" +
+                        "2_", resourceCulture);
             }
         }
         

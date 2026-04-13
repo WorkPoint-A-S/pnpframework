@@ -490,7 +490,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             }
                             catch (Exception ex)
                             {
-                                scope.LogError(CoreResources.Provisioning_ObjectHandlers_ListInstances_Creating_field__0__failed___1_____2_, fieldGuid, ex.Message, ex.StackTrace);
+                                scope.LogError(CoreResources.Provisioning_ObjectHandlers_ListInstances_Creating_field__0___1___failed___2_____3_, internalName, fieldGuid, ex.Message, ex.StackTrace);
                                 throw;
                             }
                         }
@@ -509,7 +509,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                             }
                             catch (Exception ex)
                             {
-                                scope.LogError(CoreResources.Provisioning_ObjectHandlers_ListInstances_Updating_field__0__failed___1_____2_, fieldGuid, ex.Message, ex.StackTrace);
+                                scope.LogError(CoreResources.Provisioning_ObjectHandlers_ListInstances_Updating_field__0___1___failed___2_____3_, internalName, fieldGuid, ex.Message, ex.StackTrace);
                                 throw;
                             }
                         }
@@ -682,6 +682,8 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
         private void CreateView(Web web, View view, Microsoft.SharePoint.Client.ViewCollection existingViews, List createdList, PnPMonitoredScope monitoredScope, TokenParser parser, int currentViewIndex, int total)
         {
+            string viewTitle = string.Empty;
+
             try
             {
                 //have to maintain raw displayNameElement for displayNameElement.Value.ContainsResourceToken() at Line 717
@@ -699,7 +701,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 monitoredScope.LogDebug(CoreResources.Provisioning_ObjectHandlers_ListInstances_Creating_view__0_, displayNameElement.Value);
 
                 //get from resource file
-                var viewTitle = parser.ParseString(displayNameElement.Value);
+                viewTitle = parser.ParseString(displayNameElement.Value);
                 var existingView = existingViews.FirstOrDefault(v => v.Title == viewTitle);
                 if (existingView != null)
                 {
@@ -949,7 +951,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             }
             catch (Exception ex)
             {
-                monitoredScope.LogError(CoreResources.Provisioning_ObjectHandlers_ListInstances_Creating_view_failed___0_____1_, ex.Message, ex.StackTrace);
+                monitoredScope.LogError(CoreResources.Provisioning_ObjectHandlers_ListInstances_Creating_view__0___failed___1_____2_, viewTitle, ex.Message, ex.StackTrace);
                 throw;
             }
         }

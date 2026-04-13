@@ -136,348 +136,355 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             List<Microsoft.SharePoint.Client.Field> existingFields = null,
             bool isNoScriptSite = false
             )
-        {
+        {            
             var isDirty = false;
             var reOrderFields = false;
             var name = parser.ParseString(templateContentType.Name);
-
-            if (existingContentType.Hidden != templateContentType.Hidden)
+            try
             {
-                scope.LogPropertyUpdate(nameof(existingContentType.Hidden));
-                existingContentType.Hidden = templateContentType.Hidden;
-                isDirty = true;
-            }
-            // Only change ReadOnly here, if change is from True => False (not ReadOnly)
-            // If change is ReadOnly = True, it will be set later
-            if (existingContentType.ReadOnly == true && templateContentType.ReadOnly == false)
-            {
-                scope.LogPropertyUpdate(nameof(existingContentType.ReadOnly));
-                existingContentType.ReadOnly = templateContentType.ReadOnly;
-                isDirty = true;
-            }
-            if (existingContentType.Sealed != templateContentType.Sealed)
-            {
-                scope.LogPropertyUpdate(nameof(existingContentType.Sealed));
-                existingContentType.Sealed = templateContentType.Sealed;
-                isDirty = true;
-            }
-            if (templateContentType.Description != null && existingContentType.Description != parser.ParseString(templateContentType.Description))
-            {
-                scope.LogPropertyUpdate(nameof(existingContentType.Description));
-                existingContentType.Description = parser.ParseString(templateContentType.Description);
-                isDirty = true;
-            }
-            if (templateContentType.DocumentTemplate != null && existingContentType.DocumentTemplate != parser.ParseString(templateContentType.DocumentTemplate))
-            {
-                scope.LogPropertyUpdate(nameof(existingContentType.DocumentTemplate));
-                existingContentType.DocumentTemplate = parser.ParseString(templateContentType.DocumentTemplate);
-                isDirty = true;
-            }
-            if (existingContentType.Name != parser.ParseString(templateContentType.Name))
-            {
-                var oldName = existingContentType.Name;
-                scope.LogPropertyUpdate(nameof(existingContentType.Name));
-                existingContentType.Name = parser.ParseString(templateContentType.Name);
-                isDirty = true;
-                // CT is being renamed, add an extra token to the tokenparser
-                parser.RemoveToken(new ContentTypeIdToken(web, oldName, existingContentType.StringId));
-                parser.AddToken(new ContentTypeIdToken(web, existingContentType.Name, existingContentType.StringId));
-            }
-            if (templateContentType.Group != null && existingContentType.Group != parser.ParseString(templateContentType.Group))
-            {
-                scope.LogPropertyUpdate(nameof(existingContentType.Group));
-                existingContentType.Group = parser.ParseString(templateContentType.Group);
-                isDirty = true;
-            }
-
-            if (!isNoScriptSite)
-            {
-                if (templateContentType.DisplayFormUrl != null && existingContentType.DisplayFormUrl != parser.ParseString(templateContentType.DisplayFormUrl))
+                if (existingContentType.Hidden != templateContentType.Hidden)
                 {
-                    scope.LogPropertyUpdate(nameof(existingContentType.DisplayFormUrl));
-                    existingContentType.DisplayFormUrl = parser.ParseString(templateContentType.DisplayFormUrl);
+                    scope.LogPropertyUpdate(nameof(existingContentType.Hidden));
+                    existingContentType.Hidden = templateContentType.Hidden;
                     isDirty = true;
                 }
-                if (templateContentType.EditFormUrl != null && existingContentType.EditFormUrl != parser.ParseString(templateContentType.EditFormUrl))
+                // Only change ReadOnly here, if change is from True => False (not ReadOnly)
+                // If change is ReadOnly = True, it will be set later
+                if (existingContentType.ReadOnly == true && templateContentType.ReadOnly == false)
                 {
-                    scope.LogPropertyUpdate(nameof(existingContentType.EditFormUrl));
-                    existingContentType.EditFormUrl = parser.ParseString(templateContentType.EditFormUrl);
+                    scope.LogPropertyUpdate(nameof(existingContentType.ReadOnly));
+                    existingContentType.ReadOnly = templateContentType.ReadOnly;
                     isDirty = true;
                 }
-                if (templateContentType.NewFormUrl != null && existingContentType.NewFormUrl != parser.ParseString(templateContentType.NewFormUrl))
+                if (existingContentType.Sealed != templateContentType.Sealed)
                 {
-                    scope.LogPropertyUpdate(nameof(existingContentType.NewFormUrl));
-                    existingContentType.NewFormUrl = parser.ParseString(templateContentType.NewFormUrl);
+                    scope.LogPropertyUpdate(nameof(existingContentType.Sealed));
+                    existingContentType.Sealed = templateContentType.Sealed;
                     isDirty = true;
                 }
-            }
-            else
-            {
-                if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.DisplayFormUrl)) ||
-                    !string.IsNullOrEmpty(parser.ParseString(templateContentType.EditFormUrl)) ||
-                    !string.IsNullOrEmpty(parser.ParseString(templateContentType.NewFormUrl)))
+                if (templateContentType.Description != null && existingContentType.Description != parser.ParseString(templateContentType.Description))
                 {
-                    // log message
-                    scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ContentTypes_SkipCustomFormUrls, existingContentType.Name);
+                    scope.LogPropertyUpdate(nameof(existingContentType.Description));
+                    existingContentType.Description = parser.ParseString(templateContentType.Description);
+                    isDirty = true;
                 }
-            }
-
-            // Set the SPFx form customizer settings, if any
-            SetContentTypeFormCustomizerSettings(templateContentType, parser, existingContentType);
-
-            if (templateContentType.Name.ContainsResourceToken())
-            {
-                existingContentType.NameResource.SetUserResourceValue(templateContentType.Name, parser);
-                isDirty = true;
-            }
-            if (templateContentType.Description.ContainsResourceToken())
-            {
-                existingContentType.DescriptionResource.SetUserResourceValue(templateContentType.Description, parser);
-                isDirty = true;
-            }
-
-            if (isDirty)
-            {
-                // Default to false as there is no reason to update children on CT property changes.
-                existingContentType.Update(false);
-                web.Context.ExecuteQueryRetry();
-            }
-
-            // Set flag to reorder fields CT fields are not equal to template fields
-            var existingFieldNames = existingContentType.FieldLinks.AsEnumerable().Select(fld => fld.Name).ToArray();
-            var ctFieldNames = templateContentType.FieldRefs.Select(fld => parser.ParseString(fld.Name)).ToArray();
-            reOrderFields = ctFieldNames.Length > 0 && !existingFieldNames.SequenceEqual(ctFieldNames);
-
-            // Delta handling
-            existingContentType.EnsureProperty(c => c.FieldLinks);
-            var targetIds = existingContentType.FieldLinks.AsEnumerable().Select(c1 => c1.Id).ToList();
-            var sourceIds = templateContentType.FieldRefs.Select(c1 => c1.Id).ToList();
-
-            var fieldsNotPresentInTarget = sourceIds.Except(targetIds).ToArray();
-
-            // Should child content types be updated.
-            bool UpdateChildren()
-            {
-                if (!templateContentType.UpdateChildren)
+                if (templateContentType.DocumentTemplate != null && existingContentType.DocumentTemplate != parser.ParseString(templateContentType.DocumentTemplate))
                 {
-                    return false;
+                    scope.LogPropertyUpdate(nameof(existingContentType.DocumentTemplate));
+                    existingContentType.DocumentTemplate = parser.ParseString(templateContentType.DocumentTemplate);
+                    isDirty = true;
                 }
-                if (fieldsNotPresentInTarget.Any())
+                if (existingContentType.Name != parser.ParseString(templateContentType.Name))
                 {
-                    return !templateContentType.FieldRefs.All(f => f.UpdateChildren == false);
+                    var oldName = existingContentType.Name;
+                    scope.LogPropertyUpdate(nameof(existingContentType.Name));
+                    existingContentType.Name = parser.ParseString(templateContentType.Name);
+                    isDirty = true;
+                    // CT is being renamed, add an extra token to the tokenparser
+                    parser.RemoveToken(new ContentTypeIdToken(web, oldName, existingContentType.StringId));
+                    parser.AddToken(new ContentTypeIdToken(web, existingContentType.Name, existingContentType.StringId));
+                }
+                if (templateContentType.Group != null && existingContentType.Group != parser.ParseString(templateContentType.Group))
+                {
+                    scope.LogPropertyUpdate(nameof(existingContentType.Group));
+                    existingContentType.Group = parser.ParseString(templateContentType.Group);
+                    isDirty = true;
                 }
 
-                return true;
-            }
-
-            if (fieldsNotPresentInTarget.Any())
-            {
-                // Set flag to reorder fields when new fields are added.
-                reOrderFields = true;
-
-                foreach (var fieldId in fieldsNotPresentInTarget)
+                if (!isNoScriptSite)
                 {
-                    var fieldRef = templateContentType.FieldRefs.First(fr => fr.Id == fieldId);
-
-                    var templateField = template.SiteFields.FirstOrDefault(tf => (Guid)XElement.Parse(parser.ParseString(tf.SchemaXml)).Attribute("ID") == fieldRef.Id);
-                    var fieldStep = templateField != null ? templateField.GetFieldProvisioningStep(parser) : FieldAndListProvisioningStepHelper.Step.ListAndStandardFields;
-                    if (fieldStep != _step) continue; // Do not handle this field at this step
-
-                    Microsoft.SharePoint.Client.Field field = null;
-                    if (_step == FieldAndListProvisioningStepHelper.Step.LookupFields
-                        && templateField != null
-                        && XElement.Parse(parser.ParseString(templateField.SchemaXml)).Attribute("FieldRef") != null)
+                    if (templateContentType.DisplayFormUrl != null && existingContentType.DisplayFormUrl != parser.ParseString(templateContentType.DisplayFormUrl))
                     {
-                        // Because the id of dependent lookup cannot be set and is autogenerated,
-                        // we have to retrieve the actual field id and convert it into a token
-                        var mappedFieldId = Guid.Parse(parser.ParseString(fieldRef.Id.ToString("D")));
-                        field = web.AvailableFields.GetById(mappedFieldId);
-                    }
-                    else
-                    {
-                        field = web.AvailableFields.GetById(fieldRef.Id);
-                    }
-
-                    scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_ContentTypes_Adding_field__0__to_content_type, fieldId);
-                    web.AddFieldToContentType(existingContentType, field,
-                        fieldRef.Required,
-                        fieldRef.Hidden,
-                        fieldRef.UpdateChildren,
-                        null,
-                        null);
-                }
-            }
-
-            // Reorder fields
-            if (reOrderFields)
-            {
-                existingContentType.FieldLinks.Reorder(ctFieldNames);
-                isDirty = true;
-            }
-
-            foreach (var fieldId in targetIds.Intersect(sourceIds))
-            {
-                var fieldLink = existingContentType.FieldLinks.FirstOrDefault(fl => fl.Id == fieldId);
-                var fieldRef = templateContentType.FieldRefs.Find(fr => fr.Id == fieldId);
-                if (fieldRef != null)
-                {
-                    scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_ContentTypes_Field__0__exists_in_content_type, fieldId);
-                    if (fieldLink.Required != fieldRef.Required)
-                    {
-                        scope.LogPropertyUpdate(nameof(fieldLink.Required));
-                        fieldLink.Required = fieldRef.Required;
+                        scope.LogPropertyUpdate(nameof(existingContentType.DisplayFormUrl));
+                        existingContentType.DisplayFormUrl = parser.ParseString(templateContentType.DisplayFormUrl);
                         isDirty = true;
                     }
-                    if (fieldLink.Hidden != fieldRef.Hidden)
+                    if (templateContentType.EditFormUrl != null && existingContentType.EditFormUrl != parser.ParseString(templateContentType.EditFormUrl))
                     {
-                        scope.LogPropertyUpdate(nameof(fieldLink.Hidden));
-                        fieldLink.Hidden = fieldRef.Hidden;
+                        scope.LogPropertyUpdate(nameof(existingContentType.EditFormUrl));
+                        existingContentType.EditFormUrl = parser.ParseString(templateContentType.EditFormUrl);
                         isDirty = true;
                     }
-                }
-            }
-
-            // The new CT is a DocumentSet, and the target should be, as well
-            if (templateContentType.DocumentSetTemplate != null)
-            {
-                var isChildOfDocumentSetContentType = Microsoft.SharePoint.Client.DocumentSet.DocumentSetTemplate.IsChildOfDocumentSetContentType(web.Context, existingContentType);
-                web.Context.ExecuteQueryRetry();
-
-                if (!isChildOfDocumentSetContentType.Value)
-                {
-                    scope.LogError(CoreResources.Provisioning_ObjectHandlers_ContentTypes_InvalidDocumentSet_Update_Request, existingContentType.Id, existingContentType.Name);
+                    if (templateContentType.NewFormUrl != null && existingContentType.NewFormUrl != parser.ParseString(templateContentType.NewFormUrl))
+                    {
+                        scope.LogPropertyUpdate(nameof(existingContentType.NewFormUrl));
+                        existingContentType.NewFormUrl = parser.ParseString(templateContentType.NewFormUrl);
+                        isDirty = true;
+                    }
                 }
                 else
                 {
-                    // Retrieve a reference to the DocumentSet Content Type
-                    Microsoft.SharePoint.Client.DocumentSet.DocumentSetTemplate documentSetTemplate =
-                        Microsoft.SharePoint.Client.DocumentSet.DocumentSetTemplate.GetDocumentSetTemplate(web.Context, existingContentType);
+                    if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.DisplayFormUrl)) ||
+                        !string.IsNullOrEmpty(parser.ParseString(templateContentType.EditFormUrl)) ||
+                        !string.IsNullOrEmpty(parser.ParseString(templateContentType.NewFormUrl)))
+                    {
+                        // log message
+                        scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ContentTypes_SkipCustomFormUrls, existingContentType.Name);
+                    }
+                }
 
-                    // Keep a flag if changes have been made to the document set of the content type
-                    var documentSetIsDirty = false;
+                // Set the SPFx form customizer settings, if any
+                SetContentTypeFormCustomizerSettings(templateContentType, parser, existingContentType);
 
-                    // Load the collections to allow for deletion scenarions
-                    web.Context.Load(documentSetTemplate, d => d.AllowedContentTypes, d => d.DefaultDocuments, d => d.SharedFields, d => d.WelcomePageFields);
+                if (templateContentType.Name.ContainsResourceToken())
+                {
+                    existingContentType.NameResource.SetUserResourceValue(templateContentType.Name, parser);
+                    isDirty = true;
+                }
+                if (templateContentType.Description.ContainsResourceToken())
+                {
+                    existingContentType.DescriptionResource.SetUserResourceValue(templateContentType.Description, parser);
+                    isDirty = true;
+                }
+
+                if (isDirty)
+                {
+                    // Default to false as there is no reason to update children on CT property changes.
+                    existingContentType.Update(false);
+                    web.Context.ExecuteQueryRetry();
+                }
+
+                // Set flag to reorder fields CT fields are not equal to template fields
+                var existingFieldNames = existingContentType.FieldLinks.AsEnumerable().Select(fld => fld.Name).ToArray();
+                var ctFieldNames = templateContentType.FieldRefs.Select(fld => parser.ParseString(fld.Name)).ToArray();
+                reOrderFields = ctFieldNames.Length > 0 && !existingFieldNames.SequenceEqual(ctFieldNames);
+
+                // Delta handling
+                existingContentType.EnsureProperty(c => c.FieldLinks);
+                var targetIds = existingContentType.FieldLinks.AsEnumerable().Select(c1 => c1.Id).ToList();
+                var sourceIds = templateContentType.FieldRefs.Select(c1 => c1.Id).ToList();
+
+                var fieldsNotPresentInTarget = sourceIds.Except(targetIds).ToArray();
+
+                // Should child content types be updated.
+                bool UpdateChildren()
+                {
+                    if (!templateContentType.UpdateChildren)
+                    {
+                        return false;
+                    }
+                    if (fieldsNotPresentInTarget.Any())
+                    {
+                        return !templateContentType.FieldRefs.All(f => f.UpdateChildren == false);
+                    }
+
+                    return true;
+                }
+
+                if (fieldsNotPresentInTarget.Any())
+                {
+                    // Set flag to reorder fields when new fields are added.
+                    reOrderFields = true;
+
+                    foreach (var fieldId in fieldsNotPresentInTarget)
+                    {
+                        var fieldRef = templateContentType.FieldRefs.First(fr => fr.Id == fieldId);
+
+                        var templateField = template.SiteFields.FirstOrDefault(tf => (Guid)XElement.Parse(parser.ParseString(tf.SchemaXml)).Attribute("ID") == fieldRef.Id);
+                        var fieldStep = templateField != null ? templateField.GetFieldProvisioningStep(parser) : FieldAndListProvisioningStepHelper.Step.ListAndStandardFields;
+                        if (fieldStep != _step) continue; // Do not handle this field at this step
+
+                        Microsoft.SharePoint.Client.Field field = null;
+                        if (_step == FieldAndListProvisioningStepHelper.Step.LookupFields
+                            && templateField != null
+                            && XElement.Parse(parser.ParseString(templateField.SchemaXml)).Attribute("FieldRef") != null)
+                        {
+                            // Because the id of dependent lookup cannot be set and is autogenerated,
+                            // we have to retrieve the actual field id and convert it into a token
+                            var mappedFieldId = Guid.Parse(parser.ParseString(fieldRef.Id.ToString("D")));
+                            field = web.AvailableFields.GetById(mappedFieldId);
+                        }
+                        else
+                        {
+                            field = web.AvailableFields.GetById(fieldRef.Id);
+                        }
+
+                        scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_ContentTypes_Adding_field__0__to_content_type, fieldId);
+                        web.AddFieldToContentType(existingContentType, field,
+                            fieldRef.Required,
+                            fieldRef.Hidden,
+                            fieldRef.UpdateChildren,
+                            null,
+                            null);
+                    }
+                }
+
+                // Reorder fields
+                if (reOrderFields)
+                {
+                    existingContentType.FieldLinks.Reorder(ctFieldNames);
+                    isDirty = true;
+                }
+
+                foreach (var fieldId in targetIds.Intersect(sourceIds))
+                {
+                    var fieldLink = existingContentType.FieldLinks.FirstOrDefault(fl => fl.Id == fieldId);
+                    var fieldRef = templateContentType.FieldRefs.Find(fr => fr.Id == fieldId);
+                    if (fieldRef != null)
+                    {
+                        scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_ContentTypes_Field__0__exists_in_content_type, fieldId);
+                        if (fieldLink.Required != fieldRef.Required)
+                        {
+                            scope.LogPropertyUpdate(nameof(fieldLink.Required));
+                            fieldLink.Required = fieldRef.Required;
+                            isDirty = true;
+                        }
+                        if (fieldLink.Hidden != fieldRef.Hidden)
+                        {
+                            scope.LogPropertyUpdate(nameof(fieldLink.Hidden));
+                            fieldLink.Hidden = fieldRef.Hidden;
+                            isDirty = true;
+                        }
+                    }
+                }
+
+                // The new CT is a DocumentSet, and the target should be, as well
+                if (templateContentType.DocumentSetTemplate != null)
+                {
+                    var isChildOfDocumentSetContentType = Microsoft.SharePoint.Client.DocumentSet.DocumentSetTemplate.IsChildOfDocumentSetContentType(web.Context, existingContentType);
                     web.Context.ExecuteQueryRetry();
 
-                    if (!String.IsNullOrEmpty(templateContentType.DocumentSetTemplate.WelcomePage))
+                    if (!isChildOfDocumentSetContentType.Value)
                     {
-                        // TODO: Customize the WelcomePage of the DocumentSet
+                        scope.LogError(CoreResources.Provisioning_ObjectHandlers_ContentTypes_InvalidDocumentSet_Update_Request, existingContentType.Id, existingContentType.Name);
                     }
-
-                    // AllowedContentTypes
-                    // Add additional content types to the set of allowed content types
-                    foreach (var ctItem in templateContentType.DocumentSetTemplate.AllowedContentTypes)
+                    else
                     {
-                        // Validate if the content type is not part of the document set content types yet
-                        // and if we do not have to remove it
-                        if (documentSetTemplate.AllowedContentTypes.All(d => d.StringValue != ctItem.ContentTypeId)
-                            && !ctItem.Remove)
-                        {
-                            Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == ctItem.ContentTypeId);
-                            if (ct != null)
-                            {
-                                documentSetTemplate.AllowedContentTypes.Add(ct.Id);
-                                documentSetIsDirty = true;
-                            }
-                        }
-                        // Otherwise, check if we need to remove the already existing content type
-                        else if (documentSetTemplate.AllowedContentTypes.Any(d => d.StringValue == ctItem.ContentTypeId)
-                            && ctItem.Remove)
-                        {
-                            Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == ctItem.ContentTypeId);
-                            if (ct != null)
-                            {
-                                documentSetTemplate.AllowedContentTypes.Remove(ct.Id);
-                                documentSetIsDirty = true;
-                            }
-                        }
-                    }
+                        // Retrieve a reference to the DocumentSet Content Type
+                        Microsoft.SharePoint.Client.DocumentSet.DocumentSetTemplate documentSetTemplate =
+                            Microsoft.SharePoint.Client.DocumentSet.DocumentSetTemplate.GetDocumentSetTemplate(web.Context, existingContentType);
 
-                    // DefaultDocuments
-                    if (!isNoScriptSite)
-                    {
-                        foreach (var doc in templateContentType.DocumentSetTemplate.DefaultDocuments)
+                        // Keep a flag if changes have been made to the document set of the content type
+                        var documentSetIsDirty = false;
+
+                        // Load the collections to allow for deletion scenarions
+                        web.Context.Load(documentSetTemplate, d => d.AllowedContentTypes, d => d.DefaultDocuments, d => d.SharedFields, d => d.WelcomePageFields);
+                        web.Context.ExecuteQueryRetry();
+
+                        if (!String.IsNullOrEmpty(templateContentType.DocumentSetTemplate.WelcomePage))
                         {
-                            // Ensure the default document is not part of the document set yet
-                            if (documentSetTemplate.DefaultDocuments.All(d => d.Name != doc.Name))
+                            // TODO: Customize the WelcomePage of the DocumentSet
+                        }
+
+                        // AllowedContentTypes
+                        // Add additional content types to the set of allowed content types
+                        foreach (var ctItem in templateContentType.DocumentSetTemplate.AllowedContentTypes)
+                        {
+                            // Validate if the content type is not part of the document set content types yet
+                            // and if we do not have to remove it
+                            if (documentSetTemplate.AllowedContentTypes.All(d => d.StringValue != ctItem.ContentTypeId)
+                                && !ctItem.Remove)
                             {
-                                Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == doc.ContentTypeId);
+                                Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == ctItem.ContentTypeId);
                                 if (ct != null)
                                 {
-                                    using (Stream fileStream = connector.GetFileStream(doc.FileSourcePath))
+                                    documentSetTemplate.AllowedContentTypes.Add(ct.Id);
+                                    documentSetIsDirty = true;
+                                }
+                            }
+                            // Otherwise, check if we need to remove the already existing content type
+                            else if (documentSetTemplate.AllowedContentTypes.Any(d => d.StringValue == ctItem.ContentTypeId)
+                                && ctItem.Remove)
+                            {
+                                Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == ctItem.ContentTypeId);
+                                if (ct != null)
+                                {
+                                    documentSetTemplate.AllowedContentTypes.Remove(ct.Id);
+                                    documentSetIsDirty = true;
+                                }
+                            }
+                        }
+
+                        // DefaultDocuments
+                        if (!isNoScriptSite)
+                        {
+                            foreach (var doc in templateContentType.DocumentSetTemplate.DefaultDocuments)
+                            {
+                                // Ensure the default document is not part of the document set yet
+                                if (documentSetTemplate.DefaultDocuments.All(d => d.Name != doc.Name))
+                                {
+                                    Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == doc.ContentTypeId);
+                                    if (ct != null)
                                     {
-                                        documentSetTemplate.DefaultDocuments.Add(doc.Name, ct.Id, ReadFullStream(fileStream));
-                                        documentSetIsDirty = true;
+                                        using (Stream fileStream = connector.GetFileStream(doc.FileSourcePath))
+                                        {
+                                            documentSetTemplate.DefaultDocuments.Add(doc.Name, ct.Id, ReadFullStream(fileStream));
+                                            documentSetIsDirty = true;
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                    else
-                    {
-                        if (templateContentType.DocumentSetTemplate.DefaultDocuments.Any())
+                        else
                         {
-                            scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ContentTypes_SkipDocumentSetDefaultDocuments, name);
-                        }
-                    }
-
-                    // SharedFields
-                    foreach (var sharedField in templateContentType.DocumentSetTemplate.SharedFields)
-                    {
-                        // Ensure the shared field is not part of the document set yet
-                        // and if we do not have to remove it
-                        if (documentSetTemplate.SharedFields.All(f => f.Id != sharedField.Id)
-                            && !sharedField.Remove)
-                        {
-                            Microsoft.SharePoint.Client.Field field = existingFields.FirstOrDefault(f => f.Id == sharedField.Id);
-                            if (field != null)
+                            if (templateContentType.DocumentSetTemplate.DefaultDocuments.Any())
                             {
-                                documentSetTemplate.SharedFields.Add(field);
-                                documentSetIsDirty = true;
+                                scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ContentTypes_SkipDocumentSetDefaultDocuments, name);
                             }
                         }
-                        // Otherwise, check if we need to remove the already existing shared field
-                        else if (documentSetTemplate.SharedFields.Any(f => f.Id != sharedField.Id)
-                            && sharedField.Remove)
+
+                        // SharedFields
+                        foreach (var sharedField in templateContentType.DocumentSetTemplate.SharedFields)
                         {
-                            Microsoft.SharePoint.Client.Field field = existingFields.FirstOrDefault(f => f.Id == sharedField.Id);
-                            if (field != null)
+                            // Ensure the shared field is not part of the document set yet
+                            // and if we do not have to remove it
+                            if (documentSetTemplate.SharedFields.All(f => f.Id != sharedField.Id)
+                                && !sharedField.Remove)
                             {
-                                documentSetTemplate.SharedFields.Remove(field);
-                                documentSetIsDirty = true;
+                                Microsoft.SharePoint.Client.Field field = existingFields.FirstOrDefault(f => f.Id == sharedField.Id);
+                                if (field != null)
+                                {
+                                    documentSetTemplate.SharedFields.Add(field);
+                                    documentSetIsDirty = true;
+                                }
+                            }
+                            // Otherwise, check if we need to remove the already existing shared field
+                            else if (documentSetTemplate.SharedFields.Any(f => f.Id != sharedField.Id)
+                                && sharedField.Remove)
+                            {
+                                Microsoft.SharePoint.Client.Field field = existingFields.FirstOrDefault(f => f.Id == sharedField.Id);
+                                if (field != null)
+                                {
+                                    documentSetTemplate.SharedFields.Remove(field);
+                                    documentSetIsDirty = true;
+                                }
                             }
                         }
-                    }
 
-                    // WelcomePageFields
-                    foreach (var welcomePageField in templateContentType.DocumentSetTemplate.WelcomePageFields)
-                    {
-                        // Ensure the welcomepage field is not part of the document set yet
-                        if (documentSetTemplate.WelcomePageFields.All(w => w.Id != welcomePageField.Id))
+                        // WelcomePageFields
+                        foreach (var welcomePageField in templateContentType.DocumentSetTemplate.WelcomePageFields)
                         {
-                            Microsoft.SharePoint.Client.Field field = existingFields.FirstOrDefault(f => f.Id == welcomePageField.Id);
-                            if (field != null)
+                            // Ensure the welcomepage field is not part of the document set yet
+                            if (documentSetTemplate.WelcomePageFields.All(w => w.Id != welcomePageField.Id))
                             {
-                                documentSetTemplate.WelcomePageFields.Add(field);
-                                documentSetIsDirty = true;
+                                Microsoft.SharePoint.Client.Field field = existingFields.FirstOrDefault(f => f.Id == welcomePageField.Id);
+                                if (field != null)
+                                {
+                                    documentSetTemplate.WelcomePageFields.Add(field);
+                                    documentSetIsDirty = true;
+                                }
                             }
                         }
-                    }
 
-                    if (documentSetIsDirty)
-                    {
-                        documentSetTemplate.Update(templateContentType.DocumentSetTemplate.UpdateChildren);
-                        isDirty = true;
+                        if (documentSetIsDirty)
+                        {
+                            documentSetTemplate.Update(templateContentType.DocumentSetTemplate.UpdateChildren);
+                            isDirty = true;
+                        }
                     }
                 }
-            }
 
-            if (isDirty)
+                if (isDirty)
+                {
+                    scope.LogDebug("Update child Content Types: {0}", UpdateChildren());
+                    existingContentType.Update(UpdateChildren());
+                    web.Context.ExecuteQueryRetry();
+                }
+            }
+            catch (Exception ex)
             {
-                scope.LogDebug("Update child Content Types: {0}", UpdateChildren());
-                existingContentType.Update(UpdateChildren());
-                web.Context.ExecuteQueryRetry();
+                scope.LogError(ex, CoreResources.Provisioning_ObjectHandlers_ContentTypes_Updating_existing_Content_Type___0___failed___1_, name, ex.Message);
+                throw;
             }
         }
 
@@ -497,291 +504,299 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
             var id = parser.ParseString(templateContentType.Id);
             var group = parser.ParseString(templateContentType.Group);
 
-            var createdCT = web.CreateContentType(name, description, id, group);
-            createdCT.EnsureProperties(ct => ct.ReadOnly, ct => ct.Hidden, ct => ct.Sealed, ct => ct.NewFormClientSideComponentId, ct => ct.DisplayFormClientSideComponentId, ct => ct.EditFormClientSideComponentId);
-
-            List<FieldRef> fieldsRefsToProcess = new List<FieldRef>();
-            foreach (FieldRef fr in templateContentType.FieldRefs)
+            try
             {
-                var templateField = template.SiteFields.FirstOrDefault(tf => tf.GetFieldId(parser) == fr.Id);
-                if (templateField == null || templateField.GetFieldProvisioningStep(parser) == _step)
-                {
-                    fieldsRefsToProcess.Add(fr);
-                }
-            }
+                var createdCT = web.CreateContentType(name, description, id, group);
+                createdCT.EnsureProperties(ct => ct.ReadOnly, ct => ct.Hidden, ct => ct.Sealed, ct => ct.NewFormClientSideComponentId, ct => ct.DisplayFormClientSideComponentId, ct => ct.EditFormClientSideComponentId);
 
-            foreach (var fieldRef in fieldsRefsToProcess)
-            {
-                Microsoft.SharePoint.Client.Field field = null;
-                try
+                List<FieldRef> fieldsRefsToProcess = new List<FieldRef>();
+                foreach (FieldRef fr in templateContentType.FieldRefs)
                 {
-                    field = web.AvailableFields.GetById(fieldRef.Id);
-                }
-                catch (ArgumentException)
-                {
-                    if (!string.IsNullOrEmpty(fieldRef.Name))
+                    var templateField = template.SiteFields.FirstOrDefault(tf => tf.GetFieldId(parser) == fr.Id);
+                    if (templateField == null || templateField.GetFieldProvisioningStep(parser) == _step)
                     {
-                        field = web.AvailableFields.GetByInternalNameOrTitle(fieldRef.Name);
+                        fieldsRefsToProcess.Add(fr);
                     }
                 }
-                // Add it to the target content type
-                // Notice that this code will fail if the field does not exist
-                web.AddFieldToContentType(createdCT, field,
-                    fieldRef.Required,
-                    fieldRef.Hidden,
-                    fieldRef.UpdateChildren,
-                    null,
-                    null);
-            }
 
-            // Add new CTs
-            parser.AddToken(new ContentTypeIdToken(web, name, id));
+                foreach (var fieldRef in fieldsRefsToProcess)
+                {
+                    Microsoft.SharePoint.Client.Field field = null;
+                    try
+                    {
+                        field = web.AvailableFields.GetById(fieldRef.Id);
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!string.IsNullOrEmpty(fieldRef.Name))
+                        {
+                            field = web.AvailableFields.GetByInternalNameOrTitle(fieldRef.Name);
+                        }
+                    }
+                    // Add it to the target content type
+                    // Notice that this code will fail if the field does not exist
+                    web.AddFieldToContentType(createdCT, field,
+                        fieldRef.Required,
+                        fieldRef.Hidden,
+                        fieldRef.UpdateChildren,
+                        null,
+                        null);
+                }
 
-            // Set resources
-            if (templateContentType.Name.ContainsResourceToken())
-            {
-                createdCT.NameResource.SetUserResourceValue(templateContentType.Name, parser);
-            }
-            if (templateContentType.Description.ContainsResourceToken())
-            {
-                createdCT.DescriptionResource.SetUserResourceValue(templateContentType.Description, parser);
-            }
+                // Add new CTs
+                parser.AddToken(new ContentTypeIdToken(web, name, id));
 
-            //Reorder the elements so that the new created Content Type has the same order as defined in the
-            //template. The order can be different if the new Content Type inherits from another Content Type.
-            //In this case the new Content Type has all field of the original Content Type and missing fields
-            //will be added at the end. To fix this issue we ordering the fields once more.
+                // Set resources
+                if (templateContentType.Name.ContainsResourceToken())
+                {
+                    createdCT.NameResource.SetUserResourceValue(templateContentType.Name, parser);
+                }
+                if (templateContentType.Description.ContainsResourceToken())
+                {
+                    createdCT.DescriptionResource.SetUserResourceValue(templateContentType.Description, parser);
+                }
 
-            var ctFields = templateContentType.FieldRefs.Select(fld => parser.ParseString(fld.Name)).ToArray();
-            if (ctFields.Length > 0)
-            {
-                createdCT.FieldLinks.Reorder(ctFields);
-            }
-            // Set Hidden and Sealed property, ReadOnly will be set later
-            if (createdCT.Hidden != templateContentType.Hidden)
-            {
-                createdCT.Hidden = templateContentType.Hidden;
-            }
-            if (createdCT.Sealed != templateContentType.Sealed)
-            {
-                createdCT.Sealed = templateContentType.Sealed;
-            }
+                //Reorder the elements so that the new created Content Type has the same order as defined in the
+                //template. The order can be different if the new Content Type inherits from another Content Type.
+                //In this case the new Content Type has all field of the original Content Type and missing fields
+                //will be added at the end. To fix this issue we ordering the fields once more.
 
-            if (templateContentType.DocumentSetTemplate == null)
-            {
-                // Only apply a document template when the contenttype is not a document set
-                //Skipping updates of DocumentTemplate as we can't upload files to /_cts/ContentTypeName/FileName to noscript sites
-                if (!isNoScriptSite)
+                var ctFields = templateContentType.FieldRefs.Select(fld => parser.ParseString(fld.Name)).ToArray();
+                if (ctFields.Length > 0)
+                {
+                    createdCT.FieldLinks.Reorder(ctFields);
+                }
+                // Set Hidden and Sealed property, ReadOnly will be set later
+                if (createdCT.Hidden != templateContentType.Hidden)
+                {
+                    createdCT.Hidden = templateContentType.Hidden;
+                }
+                if (createdCT.Sealed != templateContentType.Sealed)
+                {
+                    createdCT.Sealed = templateContentType.Sealed;
+                }
+
+                if (templateContentType.DocumentSetTemplate == null)
                 {
                     // Only apply a document template when the contenttype is not a document set
-                    if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.DocumentTemplate)))
+                    //Skipping updates of DocumentTemplate as we can't upload files to /_cts/ContentTypeName/FileName to noscript sites
+                    if (!isNoScriptSite)
                     {
-                        string documentTemplate = parser.ParseString(templateContentType.DocumentTemplate);
-                        web.EnsureProperties(w => w.ServerRelativeUrl, w => w.Url);
-                        try
+                        // Only apply a document template when the contenttype is not a document set
+                        if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.DocumentTemplate)))
                         {
-                            using (var fsstream = template.Connector.GetFileStream($"_cts/{name}/{documentTemplate}"))
+                            string documentTemplate = parser.ParseString(templateContentType.DocumentTemplate);
+                            web.EnsureProperties(w => w.ServerRelativeUrl, w => w.Url);
+                            try
                             {
-                                if (fsstream != null)
+                                using (var fsstream = template.Connector.GetFileStream($"_cts/{name}/{documentTemplate}"))
                                 {
-                                    Microsoft.SharePoint.Client.Folder ctFolder = web.GetFolderByServerRelativeUrl($"{web.ServerRelativeUrl}/_cts/{name}");
-                                    web.Context.Load(ctFolder, fl => fl.Files.Include(f => f.Name, f => f.ServerRelativeUrl));
-                                    web.Context.ExecuteQueryRetry();
-
-                                    FileCreationInformation newFile = new FileCreationInformation
+                                    if (fsstream != null)
                                     {
-                                        ContentStream = fsstream,
-                                        Url = $"{web.ServerRelativeUrl}/_cts/{name}/{documentTemplate}"
-                                    };
+                                        Microsoft.SharePoint.Client.Folder ctFolder = web.GetFolderByServerRelativeUrl($"{web.ServerRelativeUrl}/_cts/{name}");
+                                        web.Context.Load(ctFolder, fl => fl.Files.Include(f => f.Name, f => f.ServerRelativeUrl));
+                                        web.Context.ExecuteQueryRetry();
 
-                                    Microsoft.SharePoint.Client.File uploadedFile = ctFolder.Files.Add(newFile);
-                                    web.Context.Load(uploadedFile);
-                                    web.Context.ExecuteQueryRetry();
+                                        FileCreationInformation newFile = new FileCreationInformation
+                                        {
+                                            ContentStream = fsstream,
+                                            Url = $"{web.ServerRelativeUrl}/_cts/{name}/{documentTemplate}"
+                                        };
+
+                                        Microsoft.SharePoint.Client.File uploadedFile = ctFolder.Files.Add(newFile);
+                                        web.Context.Load(uploadedFile);
+                                        web.Context.ExecuteQueryRetry();
+                                    }
                                 }
+                                createdCT.DocumentTemplate = documentTemplate;
                             }
-                            createdCT.DocumentTemplate = documentTemplate;
+                            catch (Exception ex)
+                            {
+                                scope.LogError(ex, CoreResources.Provisioning_ObjectHandlers_ContentTypes_ErrorDocumentTemplate, name, documentTemplate);
+                            }
                         }
-                        catch (Exception ex)
+                    }
+                    else
+                    {
+                        var parsedDocumentTemplate = parser.ParseString(templateContentType.DocumentTemplate);
+                        if (!string.IsNullOrEmpty(parsedDocumentTemplate))
                         {
-                            scope.LogError(ex, CoreResources.Provisioning_ObjectHandlers_ContentTypes_ErrorDocumentTemplate, name, documentTemplate);
+                            createdCT.DocumentTemplate = parsedDocumentTemplate;
+                            // log message that's we are skipping uploads
+                            scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ContentTypes_SkipDocumentTemplate, name);
                         }
+                    }
+                }
+
+                // Skipping updates of forms as we can't upload forms to noscript sites
+                if (!isNoScriptSite)
+                {
+                    if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.NewFormUrl)))
+                    {
+                        createdCT.NewFormUrl = parser.ParseString(templateContentType.NewFormUrl);
+                    }
+                    if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.EditFormUrl)))
+                    {
+                        createdCT.EditFormUrl = parser.ParseString(templateContentType.EditFormUrl);
+                    }
+                    if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.DisplayFormUrl)))
+                    {
+                        createdCT.DisplayFormUrl = parser.ParseString(templateContentType.DisplayFormUrl);
                     }
                 }
                 else
                 {
-                    var parsedDocumentTemplate = parser.ParseString(templateContentType.DocumentTemplate);
-                    if (!string.IsNullOrEmpty(parsedDocumentTemplate))
+                    if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.DisplayFormUrl)) ||
+                        !string.IsNullOrEmpty(parser.ParseString(templateContentType.EditFormUrl)) ||
+                        !string.IsNullOrEmpty(parser.ParseString(templateContentType.NewFormUrl)))
                     {
-                        createdCT.DocumentTemplate = parsedDocumentTemplate;
-                        // log message that's we are skipping uploads
-                        scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ContentTypes_SkipDocumentTemplate, name);
+                        // log message
+                        scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ContentTypes_SkipCustomFormUrls, name);
                     }
                 }
-            }
 
-            // Skipping updates of forms as we can't upload forms to noscript sites
-            if (!isNoScriptSite)
-            {
-                if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.NewFormUrl)))
-                {
-                    createdCT.NewFormUrl = parser.ParseString(templateContentType.NewFormUrl);
-                }
-                if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.EditFormUrl)))
-                {
-                    createdCT.EditFormUrl = parser.ParseString(templateContentType.EditFormUrl);
-                }
-                if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.DisplayFormUrl)))
-                {
-                    createdCT.DisplayFormUrl = parser.ParseString(templateContentType.DisplayFormUrl);
-                }
-            }
-            else
-            {
-                if (!string.IsNullOrEmpty(parser.ParseString(templateContentType.DisplayFormUrl)) ||
-                    !string.IsNullOrEmpty(parser.ParseString(templateContentType.EditFormUrl)) ||
-                    !string.IsNullOrEmpty(parser.ParseString(templateContentType.NewFormUrl)))
-                {
-                    // log message
-                    scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ContentTypes_SkipCustomFormUrls, name);
-                }
-            }
+                // Set the SPFx form customizer settings, if any
+                SetContentTypeFormCustomizerSettings(templateContentType, parser, createdCT);
 
-            // Set the SPFx form customizer settings, if any
-            SetContentTypeFormCustomizerSettings(templateContentType, parser, createdCT);
-
-            createdCT.Update(true);
-            web.Context.ExecuteQueryRetry();
-
-            // If the CT is a DocumentSet
-            if (templateContentType.DocumentSetTemplate != null)
-            {
-                // Retrieve a reference to the DocumentSet Content Type
-                Microsoft.SharePoint.Client.DocumentSet.DocumentSetTemplate documentSetTemplate =
-                    Microsoft.SharePoint.Client.DocumentSet.DocumentSetTemplate.GetDocumentSetTemplate(web.Context, createdCT);
-
-                // Load the collections to allow for deletion scenarions
-                web.Context.Load(documentSetTemplate, d => d.AllowedContentTypes, d => d.DefaultDocuments, d => d.SharedFields, d => d.WelcomePageFields);
+                createdCT.Update(true);
                 web.Context.ExecuteQueryRetry();
 
-                if (!String.IsNullOrEmpty(templateContentType.DocumentSetTemplate.WelcomePage))
+                // If the CT is a DocumentSet
+                if (templateContentType.DocumentSetTemplate != null)
                 {
-                    // TODO: Customize the WelcomePage of the DocumentSet
-                }
+                    // Retrieve a reference to the DocumentSet Content Type
+                    Microsoft.SharePoint.Client.DocumentSet.DocumentSetTemplate documentSetTemplate =
+                        Microsoft.SharePoint.Client.DocumentSet.DocumentSetTemplate.GetDocumentSetTemplate(web.Context, createdCT);
 
-                // Add additional content types to the set of allowed content types
-                bool hasDefaultDocumentContentTypeInTemplate = false;
-                foreach (var ctItem in templateContentType.DocumentSetTemplate.AllowedContentTypes)
-                {
-                    Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == ctItem.ContentTypeId);
-                    if (ct != null)
+                    // Load the collections to allow for deletion scenarions
+                    web.Context.Load(documentSetTemplate, d => d.AllowedContentTypes, d => d.DefaultDocuments, d => d.SharedFields, d => d.WelcomePageFields);
+                    web.Context.ExecuteQueryRetry();
+
+                    if (!String.IsNullOrEmpty(templateContentType.DocumentSetTemplate.WelcomePage))
                     {
-                        // Check if we need to remove the Content Type
-                        if (ctItem.Remove)
+                        // TODO: Customize the WelcomePage of the DocumentSet
+                    }
+
+                    // Add additional content types to the set of allowed content types
+                    bool hasDefaultDocumentContentTypeInTemplate = false;
+                    foreach (var ctItem in templateContentType.DocumentSetTemplate.AllowedContentTypes)
+                    {
+                        Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == ctItem.ContentTypeId);
+                        if (ct != null)
+                        {
+                            // Check if we need to remove the Content Type
+                            if (ctItem.Remove)
+                            {
+                                documentSetTemplate.AllowedContentTypes.Remove(ct.Id);
+                            }
+                            // Otherwise add it
+                            else
+                            {
+                                if (ct.Id.StringValue.Equals("0x0101", StringComparison.InvariantCultureIgnoreCase))
+                                {
+                                    hasDefaultDocumentContentTypeInTemplate = true;
+                                }
+
+                                documentSetTemplate.AllowedContentTypes.Add(ct.Id);
+                            }
+                        }
+                    }
+                    // If the default document content type (0x0101) is not in our definition then remove it
+                    if (!hasDefaultDocumentContentTypeInTemplate)
+                    {
+                        Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == "0x0101");
+                        if (ct != null)
                         {
                             documentSetTemplate.AllowedContentTypes.Remove(ct.Id);
                         }
-                        // Otherwise add it
-                        else
-                        {
-                            if (ct.Id.StringValue.Equals("0x0101", StringComparison.InvariantCultureIgnoreCase))
-                            {
-                                hasDefaultDocumentContentTypeInTemplate = true;
-                            }
-
-                            documentSetTemplate.AllowedContentTypes.Add(ct.Id);
-                        }
                     }
-                }
-                // If the default document content type (0x0101) is not in our definition then remove it
-                if (!hasDefaultDocumentContentTypeInTemplate)
-                {
-                    Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == "0x0101");
-                    if (ct != null)
-                    {
-                        documentSetTemplate.AllowedContentTypes.Remove(ct.Id);
-                    }
-                }
 
-                if (!isNoScriptSite)
-                {
-                    foreach (var doc in templateContentType.DocumentSetTemplate.DefaultDocuments)
+                    if (!isNoScriptSite)
                     {
-                        Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == doc.ContentTypeId);
-                        if (ct != null)
+                        foreach (var doc in templateContentType.DocumentSetTemplate.DefaultDocuments)
                         {
-                            using (Stream fileStream = connector.GetFileStream(doc.FileSourcePath))
+                            Microsoft.SharePoint.Client.ContentType ct = existingCTs.FirstOrDefault(c => c.StringId == doc.ContentTypeId);
+                            if (ct != null)
                             {
-                                documentSetTemplate.DefaultDocuments.Add(doc.Name, ct.Id, ReadFullStream(fileStream));
+                                using (Stream fileStream = connector.GetFileStream(doc.FileSourcePath))
+                                {
+                                    documentSetTemplate.DefaultDocuments.Add(doc.Name, ct.Id, ReadFullStream(fileStream));
+                                }
                             }
                         }
                     }
-                }
-                else
-                {
-                    if (templateContentType.DocumentSetTemplate.DefaultDocuments.Any())
+                    else
                     {
-                        scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ContentTypes_SkipDocumentSetDefaultDocuments, name);
-                    }
-                }
-
-                foreach (var sharedField in templateContentType.DocumentSetTemplate.SharedFields)
-                {
-                    Microsoft.SharePoint.Client.Field field = existingFields.FirstOrDefault(f => f.Id == sharedField.Id);
-                    if (field != null)
-                    {
-                        // Check if we need to remove the Content Type
-                        if (sharedField.Remove)
+                        if (templateContentType.DocumentSetTemplate.DefaultDocuments.Any())
                         {
-                            documentSetTemplate.SharedFields.Remove(field);
-                        }
-                        // Otherwise add it
-                        else
-                        {
-                            documentSetTemplate.SharedFields.Add(field);
+                            scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_ContentTypes_SkipDocumentSetDefaultDocuments, name);
                         }
                     }
-                }
 
-                foreach (var welcomePageField in templateContentType.DocumentSetTemplate.WelcomePageFields)
-                {
-                    Microsoft.SharePoint.Client.Field field = existingFields.FirstOrDefault(f => f.Id == welcomePageField.Id);
-                    if (field != null)
+                    foreach (var sharedField in templateContentType.DocumentSetTemplate.SharedFields)
                     {
-                        documentSetTemplate.WelcomePageFields.Add(field);
+                        Microsoft.SharePoint.Client.Field field = existingFields.FirstOrDefault(f => f.Id == sharedField.Id);
+                        if (field != null)
+                        {
+                            // Check if we need to remove the Content Type
+                            if (sharedField.Remove)
+                            {
+                                documentSetTemplate.SharedFields.Remove(field);
+                            }
+                            // Otherwise add it
+                            else
+                            {
+                                documentSetTemplate.SharedFields.Add(field);
+                            }
+                        }
+                    }
+
+                    foreach (var welcomePageField in templateContentType.DocumentSetTemplate.WelcomePageFields)
+                    {
+                        Microsoft.SharePoint.Client.Field field = existingFields.FirstOrDefault(f => f.Id == welcomePageField.Id);
+                        if (field != null)
+                        {
+                            documentSetTemplate.WelcomePageFields.Add(field);
+                        }
+                    }
+
+                    documentSetTemplate.Update(templateContentType.DocumentSetTemplate.UpdateChildren);
+                    web.Context.ExecuteQueryRetry();
+                }
+                else if (templateContentType.Id.StartsWith(BuiltInContentTypeId.Workflow2013Task + "00"))
+                {
+                    // If the Workflow Task (SP2013) contains more than one outcomeChoice, the Form UI will not show
+                    // the buttons associated each to choices, but fallback to classic Save and Cancel buttons.
+                    // +"00" is used to target only inherited content types and not alter OOB
+                    var outcomeFields = web.Context.LoadQuery(
+                        createdCT.Fields.Where(f => f.TypeAsString == "OutcomeChoice"));
+                    web.Context.ExecuteQueryRetry();
+
+                    if (outcomeFields.Any())
+                    {
+                        // 2 OutcomeChoice specified means the user has certainly push its own.
+                        // Let's remove the default outcome field
+                        var field = outcomeFields.FirstOrDefault(f => f.StaticName == "TaskOutcome");
+                        if (field != null)
+                        {
+                            var fl = createdCT.FieldLinks.GetById(field.Id);
+                            fl.DeleteObject();
+                            createdCT.Update(true);
+                            web.Context.ExecuteQueryRetry();
+                        }
                     }
                 }
 
-                documentSetTemplate.Update(templateContentType.DocumentSetTemplate.UpdateChildren);
+                web.Context.Load(createdCT);
                 web.Context.ExecuteQueryRetry();
+
+                return createdCT;
             }
-            else if (templateContentType.Id.StartsWith(BuiltInContentTypeId.Workflow2013Task + "00"))
+            catch (Exception ex)
             {
-                // If the Workflow Task (SP2013) contains more than one outcomeChoice, the Form UI will not show
-                // the buttons associated each to choices, but fallback to classic Save and Cancel buttons.
-                // +"00" is used to target only inherited content types and not alter OOB
-                var outcomeFields = web.Context.LoadQuery(
-                    createdCT.Fields.Where(f => f.TypeAsString == "OutcomeChoice"));
-                web.Context.ExecuteQueryRetry();
-
-                if (outcomeFields.Any())
-                {
-                    // 2 OutcomeChoice specified means the user has certainly push its own.
-                    // Let's remove the default outcome field
-                    var field = outcomeFields.FirstOrDefault(f => f.StaticName == "TaskOutcome");
-                    if (field != null)
-                    {
-                        var fl = createdCT.FieldLinks.GetById(field.Id);
-                        fl.DeleteObject();
-                        createdCT.Update(true);
-                        web.Context.ExecuteQueryRetry();
-                    }
-                }
+                scope.LogError(ex, CoreResources.Provisioning_ObjectHandlers_ContentTypes_Creating_new_Content_Type___0___failed___1_, name, ex.Message);
+                throw;
             }
-
-            web.Context.Load(createdCT);
-            web.Context.ExecuteQueryRetry();
-
-            return createdCT;
         }
 
         private static void SetContentTypeFormCustomizerSettings(ContentType templateContentType, TokenParser parser, Microsoft.SharePoint.Client.ContentType createdCT)

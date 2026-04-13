@@ -768,14 +768,14 @@
   <data name="Provisioning_ObjectHandlers_ListInstances_Creating_field__0_" xml:space="preserve">
     <value>Creating field {0}</value>
   </data>
-  <data name="Provisioning_ObjectHandlers_ListInstances_Creating_field__0__failed___1_____2_" xml:space="preserve">
-    <value>Creating field {0} failed: {1} : {2}</value>
+  <data name="Provisioning_ObjectHandlers_ListInstances_Creating_field__0___1___failed___2_____3_" xml:space="preserve">
+    <value>Creating field {0} ({1}) failed: {2} : {3}</value>
   </data>
   <data name="Provisioning_ObjectHandlers_ListInstances_Updating_field__0_" xml:space="preserve">
     <value>Updating field {0}</value>
   </data>
-  <data name="Provisioning_ObjectHandlers_ListInstances_Updating_field__0__failed___1_____2_" xml:space="preserve">
-    <value>Updating field {0} failed: {1} : {2}</value>
+  <data name="Provisioning_ObjectHandlers_ListInstances_Updating_field__0___1___failed___2_____3_" xml:space="preserve">
+    <value>Updating field {0} ({1}) failed: {2} : {3}</value>
   </data>
   <data name="Provisioning_ObjectHandlers_ListInstancesDataRows_Processing_data_rows_for__0_" xml:space="preserve">
     <value>Processing data rows for {0}</value>
@@ -813,8 +813,8 @@
   <data name="Provisioning_ObjectHandlers_ListInstances_Creating_view__0_" xml:space="preserve">
     <value>Creating view {0}</value>
   </data>
-  <data name="Provisioning_ObjectHandlers_ListInstances_Creating_view_failed___0_____1_" xml:space="preserve">
-    <value>Creating view failed: {0} : {1}</value>
+  <data name="Provisioning_ObjectHandlers_ListInstances_Creating_view__0___failed___1_____2_" xml:space="preserve">
+    <value>Creating view {0} failed: {1} : {2}</value>
   </data>
   <data name="Provisioning_ObjectHandlers_ListInstances_Field__0____1___exists_in_list__2____3___but_is_of_different_type__Skipping_field_" xml:space="preserve">
     <value>Field {0} ({1}) exists in list {2} ({3}) but is of different type. Skipping field.</value>
@@ -1232,5 +1232,23 @@
   </data>
   <data name="FeatureExtensions_ProcessFeatureInternal_IsFeatureActiveInternalException" xml:space="preserve">
     <value>Failed to check if Feature {0} is active.</value>
+  </data>
+  <data name="Provisioning_ObjectHandlers_ContentTypes_Creating_new_Content_Type___0___failed___1_" xml:space="preserve">
+    <value>Creating new Content Type: {0} failed: {1} </value>
+  </data>
+  <data name="Provisioning_ObjectHandlers_ContentTypes_Updating_existing_Content_Type___0___failed___1_" xml:space="preserve">
+    <value>Updating existing Content Type: {0} failed: {1} </value>
+  </data>
+  <data name="Provisioning_ObjectHandlers_ClientSidePages_Creating_page____0___failed___1_" xml:space="preserve">
+    <value>Creating page {0} failed: {1}</value>
+  </data>
+  <data name="Provisioning_ObjectHandlers_TermGroups_Creating_term___0_____1_____2_____failed_____3_" xml:space="preserve">
+    <value>Creating term {0} ({1}) (parent: {2}) failed: {3}</value>
+  </data>
+  <data name="Provisioning_ObjectHandlers_TermGroups_Creating_termgroup___0_____1_____failed_____2_" xml:space="preserve">
+    <value>Creating term group {0} ({1}) failed: {2}</value>
+  </data>
+  <data name="Provisioning_ObjectHandlers_TermGroups_Creating_termset___0_____1_____failed_____2_" xml:space="preserve">
+    <value>Creating term set {0} ({1}) failed: {2}</value>
   </data>
 </root>
