@@ -103,7 +103,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         }
                         catch (Exception ex)
                         {
-                            scope.LogError(CoreResources.Provisioning_ObjectHandlers_Fields_Adding_field__0__failed___1_____2_, fieldId, ex.Message, ex.StackTrace);
+                            scope.LogError(CoreResources.Provisioning_ObjectHandlers_Fields_Adding_field__0__failed___1_____2_, fieldIdentifier, ex.Message, ex.StackTrace);
                             throw;
                         }
                     }
@@ -116,7 +116,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         }
                         catch (Exception ex)
                         {
-                            scope.LogError(CoreResources.Provisioning_ObjectHandlers_Fields_Updating_field__0__failed___1_____2_, fieldId, ex.Message, ex.StackTrace);
+                            scope.LogError(CoreResources.Provisioning_ObjectHandlers_Fields_Updating_field__0__failed___1_____2_, fieldIdentifier, ex.Message, ex.StackTrace);
                             throw;
                         }
                     }
