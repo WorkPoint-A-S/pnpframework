@@ -318,8 +318,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                                     if (Guid.TryParse((control as PnPCore.IPageWebPart).WebPartId, out Guid webPartId))
                                     {
                                         // set ControlId to webpart id
-                                        //controlInstance.ControlId = Guid.Parse((control as Pages.ClientSideWebPart).WebPartId);
-                                        controlInstance.ControlId = Guid.Parse((control as PnPCore.IPageWebPart).WebPartId);
+                                        controlInstance.ControlId = webPartId;
                                         //var webPartType = Pages.ClientSidePage.NameToClientSideWebPartEnum((control as Pages.ClientSideWebPart).WebPartId);
                                         var webPartType = pageToExtract.WebPartIdToDefaultWebPart((control as PnPCore.IPageWebPart).WebPartId);
                                         switch (webPartType)
@@ -424,9 +423,15 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                                     }
                                     else
                                     {
-                                        if ((control as PnPCore.IPageWebPart).ControlType != 14)
+                                        // SectionBackgroundControl (controlType 14) has an empty WebPartId — preserve it for round-trip provisioning
+                                        if ((control as PnPCore.IPageWebPart).ControlType == 14)
+                                        {
+                                            controlInstance.Type = WebPartType.Custom;
+                                        }
+                                        else
                                         {
                                             scope.LogWarning("Control with ControlType {0} on page has no valid WebPartId Guid", (control as PnPCore.IPageWebPart).ControlType);
+                                            continue;
                                         }
                                     }
 
@@ -509,7 +514,13 @@ namespace PnP.Framework.Provisioning.ObjectHandlers.Utilities
                                 Order = headerControl.Order,
                             };
 
-                            controlInstance.ControlId = Guid.Parse((headerControl as PnPCore.IPageWebPart).WebPartId);
+                            // Skip controls with empty/invalid WebPartId (e.g. SectionBackgroundControl)
+                            if (!Guid.TryParse((headerControl as PnPCore.IPageWebPart).WebPartId, out var headerWebPartGuid))
+                            {
+                                continue;
+                            }
+
+                            controlInstance.ControlId = headerWebPartGuid;
                             controlInstance.Type = WebPartType.Custom;
 
                             string jsonControlData = "\"id\": \"" + (headerControl as PnPCore.IPageWebPart).WebPartId + "\", \"instanceId\": \"" + (headerControl as PnPCore.IPageWebPart).InstanceId + "\", \"title\": " + JsonConvert.ToString((headerControl as PnPCore.IPageWebPart).Title) + ", \"description\": " + JsonConvert.ToString((headerControl as PnPCore.IPageWebPart).Description) + ", \"dataVersion\": \"" + (headerControl as PnPCore.IPageWebPart).DataVersion + "\", \"properties\": " + (headerControl as PnPCore.IPageWebPart).PropertiesJson + "";
