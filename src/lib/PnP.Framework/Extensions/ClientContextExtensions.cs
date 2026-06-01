@@ -1,3 +1,11 @@
+using PnP.Framework;
+using PnP.Framework.Diagnostics;
+using PnP.Framework.Http;
+using PnP.Framework.Provisioning.ObjectHandlers;
+using PnP.Framework.Sites;
+using PnP.Framework.Utilities;
+using PnP.Framework.Utilities.Async;
+using PnP.Framework.Utilities.Context;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -12,14 +20,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
-using PnP.Framework;
-using PnP.Framework.Diagnostics;
-using PnP.Framework.Http;
-using PnP.Framework.Provisioning.ObjectHandlers;
-using PnP.Framework.Sites;
-using PnP.Framework.Utilities;
-using PnP.Framework.Utilities.Async;
-using PnP.Framework.Utilities.Context;
 
 namespace Microsoft.SharePoint.Client
 {
@@ -34,6 +34,14 @@ namespace Microsoft.SharePoint.Client
 #pragma warning disable CS0169
         private static readonly ConcurrentDictionary<string, (string requestDigest, DateTime expiresOn)> RequestDigestInfos = new ConcurrentDictionary<string, (string requestDigest, DateTime expiresOn)>();
 #pragma warning restore CS0169
+
+        /// <summary>
+        /// Optional external classifier. When set, it is consulted before the built-in
+        /// rethrow path in ExecuteQueryImplementation. Returning true forces a retry
+        /// (using the same backoff logic as throttling/timeout); returning false lets
+        /// the built-in logic decide. Set once at app startup.
+        /// </summary>
+        public static Func<ServerException, bool?> ServerExceptionRetryClassifier { get; set; }
 
         //private static bool hasAuthCookies;
 
@@ -270,6 +278,25 @@ namespace Microsoft.SharePoint.Client
                 }
                 catch (ServerException serverEx)
                 {
+                    if (ServerExceptionRetryClassifier != null)
+                    {
+                        var retryDecision = ServerExceptionRetryClassifier(serverEx);
+                        if (retryDecision.HasValue)
+                        {
+                            if (retryDecision.Value)
+                            {
+                                retryAfterInterval = backoffInterval;
+                                backoffInterval *= 2;
+
+                                await Task.Delay(retryAfterInterval);
+
+                                //Add to retry count and increase delay.
+                                retryAttempts++;
+                                continue;
+                            }
+                        }
+                    }
+
                     var errorSb = new System.Text.StringBuilder();
 
                     errorSb.AppendLine(serverEx.ToString());
