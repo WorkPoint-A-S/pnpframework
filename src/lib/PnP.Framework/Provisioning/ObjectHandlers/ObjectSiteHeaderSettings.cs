@@ -83,7 +83,14 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     return parser;
                 }
 
-                web.EnsureProperties(w => w.Url, w => w.HeaderLayout);
+                web.EnsureProperties(w => w.Url, w => w.HeaderLayout, w => w.QuickLaunchEnabled);
+
+                if (web.QuickLaunchEnabled != template.Header.ShowSiteNavigation)
+                {
+                    web.QuickLaunchEnabled = template.Header.ShowSiteNavigation;
+                    web.Update();
+                    web.Context.ExecuteQueryRetry();
+                }
 
                 switch (template.Header.Layout)
                 {
@@ -124,19 +131,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     hideTitleInHeader = web.HideTitleInHeader
                 };
 				
-                web.ExecutePostAsync("/_api/web/SetChromeOptions", System.Text.Json.JsonSerializer.Serialize(jsonRequest)).GetAwaiter().GetResult();
-
-                // Move to the PnP Core SDK context
-                using (var pnpCoreContext = PnPCoreSdk.Instance.GetPnPContext(web.Context as ClientContext))
-                {
-                    // Get the Chrome options
-                    var chrome = pnpCoreContext.Web.GetBrandingManager().GetChromeOptions();
-
-                    chrome.Header.HideTitle = !template.Header.ShowSiteTitle;
-                    chrome.Navigation.Visible = template.Header.ShowSiteNavigation;
-
-                    pnpCoreContext.Web.GetBrandingManager().SetChromeOptions(chrome);
-                }
+                web.ExecutePostAsync("/_api/web/SetChromeOptions", System.Text.Json.JsonSerializer.Serialize(jsonRequest)).GetAwaiter().GetResult();               
             }
 
             return parser;
