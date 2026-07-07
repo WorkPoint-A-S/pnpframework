@@ -30,13 +30,6 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     "DesignPreview"
                 });
 
-                // Check if this is not a noscript site as we're not allowed to write to the web property bag is that one
-                bool isNoScriptSite = web.IsNoScriptSite();
-                if (isNoScriptSite)
-                {
-                    return parser;
-                }
-
                 // To handle situations where the propertybag is not updated fully when applying a theme, 
                 // we need to create a new context and use that one. Reloading the propertybag does not solve this.
                 var webUrl = web.EnsureProperty(w => w.Url);
@@ -44,36 +37,43 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
                 web = newContext.Web;
 
-                foreach (var propbagEntry in template.PropertyBagEntries)
+                try
                 {
-                    bool propExists = web.PropertyBagContainsKey(propbagEntry.Key);
-
-                    if (propbagEntry.Overwrite)
+                    foreach (var propbagEntry in template.PropertyBagEntries)
                     {
-                        var systemProp = systemPropertyBagEntriesExclusions.Any(k => propbagEntry.Key.StartsWith(k, StringComparison.OrdinalIgnoreCase));
-                        if (!systemProp || (systemProp && applyingInformation.OverwriteSystemPropertyBagValues))
+                        bool propExists = web.PropertyBagContainsKey(propbagEntry.Key);
+
+                        if (propbagEntry.Overwrite)
                         {
-                            scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_PropertyBagEntries_Overwriting_existing_propertybag_entry__0__with_value__1_, propbagEntry.Key, propbagEntry.Value);
-                            web.SetPropertyBagValue(propbagEntry.Key, parser.ParseString(propbagEntry.Value));
-                            if (propbagEntry.Indexed)
+                            var systemProp = systemPropertyBagEntriesExclusions.Any(k => propbagEntry.Key.StartsWith(k, StringComparison.OrdinalIgnoreCase));
+                            if (!systemProp || (systemProp && applyingInformation.OverwriteSystemPropertyBagValues))
                             {
-                                web.AddIndexedPropertyBagKey(propbagEntry.Key);
+                                scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_PropertyBagEntries_Overwriting_existing_propertybag_entry__0__with_value__1_, propbagEntry.Key, propbagEntry.Value);
+                                web.SetPropertyBagValue(propbagEntry.Key, parser.ParseString(propbagEntry.Value));
+                                if (propbagEntry.Indexed)
+                                {
+                                    web.AddIndexedPropertyBagKey(propbagEntry.Key);
+                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        if (!propExists)
+                        else
                         {
-                            scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_PropertyBagEntries_Creating_new_propertybag_entry__0__with_value__1__2_, propbagEntry.Key, propbagEntry.Value, propbagEntry.Indexed ? ",Indexed = true" : "");
-                            web.SetPropertyBagValue(propbagEntry.Key, parser.ParseString(propbagEntry.Value));
-                            if (propbagEntry.Indexed)
+                            if (!propExists)
                             {
-                                web.AddIndexedPropertyBagKey(propbagEntry.Key);
+                                scope.LogDebug(CoreResources.Provisioning_ObjectHandlers_PropertyBagEntries_Creating_new_propertybag_entry__0__with_value__1__2_, propbagEntry.Key, propbagEntry.Value, propbagEntry.Indexed ? ",Indexed = true" : "");
+                                web.SetPropertyBagValue(propbagEntry.Key, parser.ParseString(propbagEntry.Value));
+                                if (propbagEntry.Indexed)
+                                {
+                                    web.AddIndexedPropertyBagKey(propbagEntry.Key);
+                                }
                             }
-                        }
 
+                        }
                     }
+                }
+                catch (ServerUnauthorizedAccessException)
+                {
+                    scope.LogWarning(CoreResources.Provisioning_ObjectHandlers_PropertyBagEntries_ServerUnauthorizedAccessException_applying_propertybag_entries);
                 }
             }
             return parser;
@@ -187,7 +187,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         {
             if (!_willProvision.HasValue)
             {
-                _willProvision = template.PropertyBagEntries.Any() && !web.IsNoScriptSite();
+                _willProvision = template.PropertyBagEntries.Any();
             }
             return _willProvision.Value;
 

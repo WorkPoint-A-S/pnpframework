@@ -2097,6 +2097,16 @@ namespace PnP.Framework {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Property bag entries can&apos;t be applied because site is a NoScriptSite or AllowWebPropertyBagUpdateWhenDenyAddAndCustomizePagesIsEnabled is false.
+        /// </summary>
+        internal static string Provisioning_ObjectHandlers_PropertyBagEntries_ServerUnauthorizedAccessException_applying_propertybag_entries {
+            get {
+                return ResourceManager.GetString("Provisioning_ObjectHandlers_PropertyBagEntries_ServerUnauthorizedAccessException_" +
+                        "applying_propertybag_entries", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Provisioning.
         /// </summary>
         internal static string Provisioning_ObjectHandlers_Provisioning {

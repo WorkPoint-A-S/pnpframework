@@ -1251,4 +1251,7 @@
   <data name="Provisioning_ObjectHandlers_TermGroups_Creating_termset___0_____1_____failed_____2_" xml:space="preserve">
     <value>Creating term set {0} ({1}) failed: {2}</value>
   </data>
+  <data name="Provisioning_ObjectHandlers_PropertyBagEntries_ServerUnauthorizedAccessException_applying_propertybag_entries" xml:space="preserve">
+    <value>Property bag entries can't be applied because site is a NoScriptSite or AllowWebPropertyBagUpdateWhenDenyAddAndCustomizePagesIsEnabled is false</value>
+  </data>
 </root>
