@@ -270,7 +270,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
         /// <param name="field">the field to tokenize</param>
         /// <param name="fieldXml">the xml to tokenize</param>
         /// <returns></returns>
-        internal static string TokenizeFieldFormula(Microsoft.SharePoint.Client.FieldCollection fields, FieldCalculated field, string fieldXml)
+        internal static string TokenizeFieldFormula(Microsoft.SharePoint.Client.FieldCollection fields, FieldCalculated field, string fieldXml, string source)
         {
             var schemaElement = XElement.Parse(fieldXml);
 
@@ -286,7 +286,14 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     foreach (var fieldInternalName in fieldInternalNames)
                     {
                         var referencedField = fields.GetFieldByInternalName(fieldInternalName);
-                        formulastring = formulastring.Replace($"{fieldInternalName}", $"[{referencedField.Title}]");
+                        if (referencedField != null)
+                        {
+                            formulastring = formulastring.Replace($"{fieldInternalName}", $"[{referencedField.Title}]");
+                        }
+                        else
+                        {
+                            throw new Exception($"Tokenize formula failed for the calculated field '{field.EnsureProperty(f => f.InternalName)}'. Could not find field with internal name '{fieldInternalName}' in the formula in the source '{source}'.");
+                        }
                     }
                     var fieldRefParent = schemaElement.Descendants("FieldRefs");
                     fieldRefParent.Remove();
@@ -534,7 +541,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                 }
 
                 var existingFields = web.Fields;
-                web.Context.Load(web, w => w.ServerRelativeUrl);
+                web.Context.Load(web, w => w.ServerRelativeUrl, w => w.Url);
                 web.Context.Load(existingFields, fs => fs.Include(f => f.Id, f => f.SchemaXml, f => f.TypeAsString, f => f.InternalName, f => f.Title));
                 web.Context.Load(web.Lists, ls => ls.Include(l => l.Id, l => l.Title));
                 web.Context.ExecuteQueryRetry();
@@ -581,7 +588,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                         }
                         if (element.Attribute("Type").Value == "Calculated")
                         {
-                            fieldXml = TokenizeFieldFormula(web.Fields, (FieldCalculated)field, fieldXml);
+                            fieldXml = TokenizeFieldFormula(web.Fields, (FieldCalculated)field, fieldXml, $"Url: {web.EnsureProperty(w => w.Url)}");
                             calculatedFieldsToMoveDown.Add(field.Id);
                         }
                         if (creationInfo.PersistMultiLanguageResources)

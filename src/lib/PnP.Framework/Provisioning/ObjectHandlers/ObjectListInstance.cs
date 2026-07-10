@@ -2982,7 +2982,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
 
                     if (fieldElement.Attribute("Type").Value == "Calculated")
                     {
-                        schemaXml = ObjectField.TokenizeFieldFormula(siteList.Fields, (FieldCalculated)field, schemaXml);
+                        schemaXml = ObjectField.TokenizeFieldFormula(siteList.Fields, (FieldCalculated)field, schemaXml, $"Url: '{web.EnsureProperty(w => w.Url)}' List: '{siteList.Title}'");
                     }
 
                     //Field has column Validation
