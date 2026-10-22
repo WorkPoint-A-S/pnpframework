@@ -285,28 +285,11 @@ namespace Microsoft.SharePoint.Client
 
             // Currently there is no direct API available to set the search center URL on web.
             // Set search setting at site level   
-
-            #region Enable scripting if needed and context has access
-            Tenant tenant = null;
-            Site site = null;
-            ClientContext adminContext = null;
             var ctx = ((ClientContext)web.Context);
             ctx.Load(ctx.Web, w => w.EffectiveBasePermissions); // reload permissions in case changed after connect
             ctx.ExecuteQueryRetry();
 
-            if (ctx.Web.IsNoScriptSite() && TenantExtensions.IsCurrentUserTenantAdmin(web.Context as ClientContext))
-            {
-                site = ((ClientContext)web.Context).Site;
-                site.EnsureProperty(s => s.Url);
-
-                var adminSiteUrl = tenantAdminUrl ?? web.GetTenantAdministrationUrl();
-                adminContext = web.Context.Clone(adminSiteUrl);
-                tenant = new Tenant(adminContext);
-                tenant.SetSiteProperties(site.Url, noScriptSite: false);
-            }
-            #endregion
-
-            try
+            ExecutePropertyBagUpdate(web, tenantAdminUrl, () =>
             {
                 // if another value was set then respect that
                 if (String.IsNullOrEmpty(web.GetPropertyBagValueString("SRCH_SB_SET_SITE", string.Empty)))
@@ -324,18 +307,7 @@ namespace Microsoft.SharePoint.Client
                     // When search center URL is blank remove the property (like the SharePoint UI does)
                     web.RemovePropertyBagValue("SRCH_ENH_FTR_URL_SITE");
                 }
-            }
-            finally
-            {
-                #region Disable scripting if previously enabled
-                if (adminContext != null)
-                {
-                    // Reset disabling setting the property bag if needed
-                    tenant.SetSiteProperties(site.Url, noScriptSite: true);
-                    adminContext.Dispose();
-                }
-                #endregion
-            }
+            });
         }
 
         /// <summary>
@@ -365,37 +337,23 @@ namespace Microsoft.SharePoint.Client
 
             // Currently there is no direct API available to set the search center URL on web.
             // Set search setting at web level   
-
-            #region Enable scripting if needed and context has access
-            Tenant tenant = null;
-            Site site = null;
-            ClientContext adminContext = null;
-            if (web.IsNoScriptSite() && TenantExtensions.IsCurrentUserTenantAdmin(web.Context as ClientContext))
-            {
-                site = ((ClientContext)web.Context).Site;
-                site.EnsureProperty(s => s.Url);
-
-                var adminSiteUrl = tenantAdminUrl ?? web.GetTenantAdministrationUrl();
-                adminContext = web.Context.Clone(adminSiteUrl);
-                tenant = new Tenant(adminContext);
-                tenant.SetSiteProperties(site.Url, noScriptSite: false);
-            }
-            #endregion
+            string keyName = web.IsSubSite() ? "SRCH_SB_SET_WEB" : "SRCH_SB_SET_SITE";
 
             try
             {
-                string keyName = web.IsSubSite() ? "SRCH_SB_SET_WEB" : "SRCH_SB_SET_SITE";
-
-                if (!string.IsNullOrEmpty(searchCenterUrl))
+                ExecutePropertyBagUpdate(web, tenantAdminUrl, () =>
                 {
-                    // Set search results page URL
-                    web.SetPropertyBagValue(keyName, "{\"Inherit\":false,\"ResultsPageAddress\":\"" + searchCenterUrl + "\",\"ShowNavigation\":false}");
-                }
-                else
-                {
-                    // When search results page URL is blank remove the property (like the SharePoint UI does)
-                    web.RemovePropertyBagValue(keyName);
-                }
+                    if (!string.IsNullOrEmpty(searchCenterUrl))
+                    {
+                        // Set search results page URL
+                        web.SetPropertyBagValue(keyName, "{\"Inherit\":false,\"ResultsPageAddress\":\"" + searchCenterUrl + "\",\"ShowNavigation\":false}");
+                    }
+                    else
+                    {
+                        // When search results page URL is blank remove the property (like the SharePoint UI does)
+                        web.RemovePropertyBagValue(keyName);
+                    }
+                });
             }
             catch (ServerUnauthorizedAccessException e)
             {
@@ -403,16 +361,40 @@ namespace Microsoft.SharePoint.Client
                 Log.Error(e, Constants.LOGGING_SOURCE, errorMsg);
                 throw new ApplicationException(errorMsg, e);
             }
-            finally
+        }
+
+        /// <summary>
+        /// Executes a property bag update directly. Only when this is denied (no-script site and the tenant does not allow
+        /// property bag updates via AllowWebPropertyBagUpdateWhenDenyAddAndCustomizePagesIsEnabled) and the current user is
+        /// tenant admin, scripting is temporarily enabled on the site via the tenant admin API and the update is retried.
+        /// </summary>
+        private static void ExecutePropertyBagUpdate(Web web, string tenantAdminUrl, Action update)
+        {
+            try
             {
-                #region Disable scripting if previously enabled
-                if (adminContext != null)
+                update();
+                return;
+            }
+            catch (ServerUnauthorizedAccessException) when (web.IsNoScriptSite() && TenantExtensions.IsCurrentUserTenantAdmin(web.Context as ClientContext))
+            {
+                Log.Debug(Constants.LOGGING_SOURCE, "Property bag update denied on no-script site, temporarily enabling scripting via tenant admin.");
+            }
+
+            var site = ((ClientContext)web.Context).Site;
+            site.EnsureProperty(s => s.Url);
+
+            using (var adminContext = web.Context.Clone(tenantAdminUrl ?? web.GetTenantAdministrationUrl()))
+            {
+                var tenant = new Tenant(adminContext);
+                tenant.SetSiteProperties(site.Url, noScriptSite: false);
+                try
                 {
-                    // Reset disabling setting the property bag if needed
-                    tenant.SetSiteProperties(site.Url, noScriptSite: true);
-                    adminContext.Dispose();
+                    update();
                 }
-                #endregion
+                finally
+                {
+                    tenant.SetSiteProperties(site.Url, noScriptSite: true);
+                }
             }
         }
 

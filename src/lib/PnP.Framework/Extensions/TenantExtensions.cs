@@ -576,9 +576,24 @@ namespace Microsoft.SharePoint.Client
             bool wait = true, Func<TenantOperationMessage, bool> timeoutFunction = null
             )
         {
-            var siteProps = tenant.GetSitePropertiesByUrl(siteFullUrl, true);
-            tenant.Context.Load(siteProps);
-            tenant.Context.ExecuteQueryRetry();
+            SiteProperties siteProps = null;
+            const int maxAttempts = 10;
+            for (var attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    siteProps = tenant.GetSitePropertiesByUrl(siteFullUrl, true);
+                    tenant.Context.Load(siteProps);
+                    tenant.Context.ExecuteQueryRetry();
+                    break;
+                }
+                catch (ServerException ex) when (ex.ServerErrorTypeName == "System.IO.FileNotFoundException" && attempt < maxAttempts)
+                {
+                    // Newly created sites can take a while before they are resolvable via the tenant admin API
+                    Log.Warning(Constants.LOGGING_SOURCE, $"Site {siteFullUrl} not yet available in tenant admin (attempt {attempt}/{maxAttempts}), retrying.");
+                    System.Threading.Thread.Sleep(TimeSpan.FromSeconds(Math.Min(5 * attempt, 30)));
+                }
+            }
             if (siteProps != null)
             {
                 if (allowSelfServiceUpgrade != null)
