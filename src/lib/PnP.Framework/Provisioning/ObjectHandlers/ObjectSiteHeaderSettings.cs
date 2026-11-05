@@ -131,7 +131,7 @@ namespace PnP.Framework.Provisioning.ObjectHandlers
                     hideTitleInHeader = web.HideTitleInHeader
                 };
 				
-                web.ExecutePostAsync("/_api/web/SetChromeOptions", System.Text.Json.JsonSerializer.Serialize(jsonRequest)).GetAwaiter().GetResult();               
+                web.ExecutePostWithTransientNotFoundRetryAsync("/_api/web/SetChromeOptions", System.Text.Json.JsonSerializer.Serialize(jsonRequest)).GetAwaiter().GetResult();               
             }
 
             return parser;

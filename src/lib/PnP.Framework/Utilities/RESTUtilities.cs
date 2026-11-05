@@ -1,4 +1,5 @@
 ﻿using Microsoft.SharePoint.Client;
+using PnP.Framework.Diagnostics;
 using PnP.Framework.Http;
 using System;
 using System.Net.Http;
@@ -123,6 +124,42 @@ namespace PnP.Framework.Utilities
             }
 
             return await Task.Run(() => returnObject);
+        }
+
+        internal const int TransientNotFoundRetryCount = 3;
+
+        /// <summary>
+        /// Executes a REST Post request and retries when SharePoint answers with its transient front-end 404 page.
+        /// </summary>
+        internal static Task<string> ExecutePostWithTransientNotFoundRetryAsync(this Web web, string endpoint, string payload, string cultureLanguageName = null)
+        {
+            return RetryOnTransientNotFoundAsync(() => web.ExecutePostAsync(endpoint, payload, cultureLanguageName), endpoint, TransientNotFoundRetryDelay);
+        }
+
+        internal static TimeSpan TransientNotFoundRetryDelay(int retryAttempt) => TimeSpan.FromSeconds(retryAttempt * 10);
+
+        // SharePoint intermittently answers a REST call to a new, otherwise working site with its front-end 404 page.
+        internal static bool IsTransientNotFound(Exception ex)
+        {
+            return ex != null && ex.GetType() == typeof(Exception) &&
+                   ex.Message != null && ex.Message.IndexOf("404 FILE NOT FOUND", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        internal static async Task<T> RetryOnTransientNotFoundAsync<T>(Func<Task<T>> operation, string endpoint, Func<int, TimeSpan> retryDelay)
+        {
+            for (var retryAttempt = 1; ; retryAttempt++)
+            {
+                try
+                {
+                    return await operation().ConfigureAwait(false);
+                }
+                catch (Exception ex) when (retryAttempt <= TransientNotFoundRetryCount && IsTransientNotFound(ex))
+                {
+                    var delay = retryDelay(retryAttempt);
+                    Log.Warning(Constants.LOGGING_SOURCE, $"SharePoint returned 404 FILE NOT FOUND for {endpoint}. Retry {retryAttempt} of {TransientNotFoundRetryCount} in {delay.TotalSeconds} seconds.");
+                    await Task.Delay(delay).ConfigureAwait(false);
+                }
+            }
         }
     }
 }
